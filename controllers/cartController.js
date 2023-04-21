@@ -6,7 +6,12 @@ const getCartInfo = async (req, res) => {
   try {
     const { userId } = req.params;
     const userCart = await Cart.findOne({ user: userId });
-    const totalQuantity = userCart.products.reduce((sum, product) => sum + product.quantity, 0); // 상품별 quantity 모두 더하기
+    let totalQuantity = 0;
+    if (!userCart.products) {
+      totalQuantity = 0;
+    } else {
+      totalQuantity = userCart.products.reduce((sum, product) => sum + product.quantity, 0);
+    } // 상품별 quantity 모두 더하기
 
     if (!userCart || userCart.length === 0) return res.status(404).json('장바구니 정보가 없습니다.');
 
