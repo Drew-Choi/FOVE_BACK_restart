@@ -188,7 +188,7 @@ const cartProductQtyMinus = async (req, res) => {
     product.unitSumPrice = product.price * product.quantity;
 
     await userCart.save();
-    res.status(200).json({ messege: '수량 증가 성공', userCart });
+    res.status(200).json({ messege: '수량 감소 성공', userCart });
   } catch (err) {
     console.error(err);
     res.status(500).json('알 수 없는 에러');
