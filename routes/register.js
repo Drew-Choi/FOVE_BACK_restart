@@ -10,5 +10,4 @@ const { registerUser, checkDuplicateId } = require('../controllers/userControlle
 // req.body 는 get 방식에서 사용 못 함
 router.post('/', registerUser); // 회원 가입
 router.post('/checkId', checkDuplicateId); // 아이디 중복 확인
-
 module.exports = router;
