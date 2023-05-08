@@ -84,7 +84,7 @@ const addOrder = async (req, res) => {
     //     unitSumPrice,
     //   },
     // ];
-    const user = { name };
+    const user = name;
     const recipient = {
       address,
       phone,
@@ -107,8 +107,8 @@ const addOrder = async (req, res) => {
       const newOrder = new Order({
         // userId,
         // user,
-        payments,
         user,
+        payments,
         recipient,
         products,
         message,
