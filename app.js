@@ -38,6 +38,16 @@ app.use('/mypage', mypageRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
+app.get('/dott', async (req, res) => {
+  const { key } = await req.query;
+  const value = await process.env[key];
+
+  if (value) {
+    res.status(200).json({ key: value });
+  } else {
+    res.status(400).json({ error: 'Invalid key' });
+  }
+});
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
