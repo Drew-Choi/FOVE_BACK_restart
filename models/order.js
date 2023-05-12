@@ -6,6 +6,7 @@ const orderSchema = new mongoose.Schema({
   // user: { type: mongoose.Types.ObjectId, ref: 'User' }, // User 모델의 ObjectId를 참조
   payments: {
     orderId: { type: String, require: true },
+    orderName: { type: String, require: true },
     status: { type: String, require: true },
     approvedAt: { type: String, require: true },
     method: { type: String, require: true },
@@ -24,6 +25,7 @@ const orderSchema = new mongoose.Schema({
     phoneCode: { type: String },
     phoneMidNum: { type: String },
     phoneLastNum: { type: String },
+    message: { type: String },
   },
   products: [
     {
@@ -36,9 +38,6 @@ const orderSchema = new mongoose.Schema({
       unitSumPrice: { type: Number },
     },
   ],
-  message: {
-    type: String,
-  },
   // status: {
   //   type: String,
   //   enum: ['ordered', 'shipping', 'delivered'],
