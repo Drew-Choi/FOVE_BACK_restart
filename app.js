@@ -3,6 +3,10 @@ const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
 
+//db연결
+require('./mongooseConnect');
+const User = require('./models/user')
+
 const app = express();
 
 const { PORT } = process.env;
@@ -39,6 +43,7 @@ app.use('/mypage', mypageRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
+//env중요키 서버요청
 app.get('/dott', async (req, res) => {
   const { key } = req.query;
   const value = process.env[key];
@@ -50,7 +55,32 @@ app.get('/dott', async (req, res) => {
   }
 });
 
-app.get('/kakaocb', async (req, res) => {});
+//카카오로그인
+app.get('/kakaocb', async (req, res) => {
+  const { code } = req.query;
+
+  try {
+    const res = await axios.post("https://kauth.kakao.com/oauth/token", {
+      grant_type: "authorization_code",
+      client_id: process.env.REST_API_KEY,
+      redirect_uri: process.env.REDIRECT_URI_BACK,
+      code
+    });
+
+    const { access_token, refresh_token } = res.data;
+
+    //access_token으로 카카오회원 정보 가져오기
+    const kakaoUserInfo = await axios.get("https://kapi.kakao.com/v2/user/me", {
+      headers:{
+        Authorization: `Bearer ${access_token}`,
+        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+      }
+    })
+
+    
+
+  }
+});
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
