@@ -50,7 +50,7 @@ app.get('/dott', async (req, res) => {
   }
 });
 
-app.post('/kakaocb', async (req, res) => {});
+app.get('/kakaocb', async (req, res) => {});
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
