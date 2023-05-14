@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -48,6 +49,8 @@ app.get('/dott', async (req, res) => {
     res.status(400).json({ error: 'Invalid key' });
   }
 });
+
+app.post('/kakaocb', async (req, res) => {});
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
