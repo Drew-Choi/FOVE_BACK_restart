@@ -1,6 +1,8 @@
 /* eslint-disable camelcase */
 const express = require('express');
 const axios = require('axios');
+const session = require('express-session');
+const crypto = require('crypto');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -22,6 +24,22 @@ app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'nonce-<my-nonce-value>'");
   next();
 });
+
+// session설정(쿠키)
+// eslint-disable-next-line no-undef
+const secretKey = crypto.randomBytes(64).toString('hex');
+app.use(
+  session({
+    secret: secretKey,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: false,
+      maxAge: 1000 * 60 * 60,
+    },
+  }),
+);
 
 // ------------------- 라우터 -------------------
 const cartRouter = require('./routes/cart');
@@ -101,13 +119,6 @@ app.get('/kakaocb', async (req, res) => {
     const { REDIRECT_URI } = process.env;
     console.log(nickname);
 
-    // await axios.post('http://localhost:4000/kakaofinal', {
-    //   id: kakaoId,
-    //   nameEncoded: nickname,
-    //   points: 0,
-    //   isAdmin: false,
-    // });
-
     // 몽고DB 아이디 중복여부 체크
     const duplicatedUser = await User.findOne({ id: kakaoId });
     console.log(duplicatedUser);
@@ -149,16 +160,6 @@ app.get('/kakaocb', async (req, res) => {
     res.status(400).send('로그인 실패');
   }
 });
-
-// app.post('/kakaofinal', (req, res) => {
-//   try {
-//     const userData = req.body.data;
-//     console.log(`카카오파이널: ${userData}`);
-//     res.status(200);
-//   } catch (err) {
-//     console.error(err);
-//   }
-// });
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
