@@ -6,7 +6,7 @@ require('dotenv').config();
 
 // db연결
 require('./mongooseConnect');
-// const User = require('./models/user');
+const User = require('./models/user');
 
 const app = express();
 
@@ -87,8 +87,6 @@ app.get('/kakaocb', async (req, res) => {
     console.log(access_token);
     console.log(refresh_token);
 
-    res.send('토큰 성공');
-
     // access_token으로 카카오회원 정보 가져오기
     const kakaoUserInfo = await axios.get('https://kapi.kakao.com/v2/user/me', {
       headers: {
@@ -96,45 +94,71 @@ app.get('/kakaocb', async (req, res) => {
         'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
       },
     });
+
+    console.log(kakaoUserInfo);
     const kakaoId = await kakaoUserInfo.data.kakao_account.email;
-    console.log(kakaoId);
+    const nickname = await kakaoUserInfo.data.kakao_account.profile.nickname;
+    const { REDIRECT_URI } = process.env;
+    console.log(nickname);
 
-    // // 몽고DB 아이디 중복여부 체크
-    // const duplicatedUser = await User.findOne({ id: kakaoId });
+    // await axios.post('http://localhost:4000/kakaofinal', {
+    //   id: kakaoId,
+    //   nameEncoded: nickname,
+    //   points: 0,
+    //   isAdmin: false,
+    // });
 
-    // if (duplicatedUser) {
-    //   await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
-    //   res.status(200);
-    // } else {
-    //   const newUser = {
-    //     id: kakaoId,
-    //     password: 'none',
-    //     name: kakaoUserInfo.data.properties.nickname,
-    //     phone: '',
-    //     addresses: [
-    //       {
-    //         destination: kakaoUserInfo.data.properties.nickname,
-    //         recipient: kakaoUserInfo.data.properties.nickname,
-    //         address: '',
-    //         addressDetail: '',
-    //         zipCode: '',
-    //         recipientPhone: '',
-    //         isDefault: true,
-    //       },
-    //     ],
-    //     accessToken: access_token,
-    //     refreshToken: refresh_token,
-    //   };
+    // 몽고DB 아이디 중복여부 체크
+    const duplicatedUser = await User.findOne({ id: kakaoId });
+    console.log(duplicatedUser);
 
-    //   await User.create(newUser);
-    //   res.status(200);
-    // }
+    if (duplicatedUser) {
+      await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
+      res.status(200).redirect(REDIRECT_URI);
+    } else {
+      const newUser = {
+        id: kakaoId,
+        password: 'none',
+        name: nickname,
+        phone: '',
+        age_Range: kakaoUserInfo.data.kakao_account.age_range,
+        gender: kakaoUserInfo.data.kakao_account.gender,
+        thumbnail_Image: kakaoUserInfo.data.kakao_account.profile.thumbnail_image_url,
+        profile_Image: kakaoUserInfo.data.kakao_account.profile.profile_image_url,
+        addresses: [
+          {
+            destination: nickname,
+            recipient: nickname,
+            address: '',
+            addressDetail: '',
+            zipCode: '',
+            recipientPhone: '',
+            isDefault: true,
+          },
+        ],
+        accessToken: access_token,
+        refreshToken: refresh_token,
+      };
+
+      await User.create(newUser);
+      res.status(200).redirect(REDIRECT_URI);
+    }
   } catch (error) {
     console.error(error);
     console.log(error);
     res.status(400).send('로그인 실패');
   }
 });
+
+// app.post('/kakaofinal', (req, res) => {
+//   try {
+//     const userData = req.body.data;
+//     console.log(`카카오파이널: ${userData}`);
+//     res.status(200);
+//   } catch (err) {
+//     console.error(err);
+//   }
+// });
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {

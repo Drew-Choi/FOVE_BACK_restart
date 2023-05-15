@@ -8,6 +8,10 @@ const userSchema = new Schema(
     password: { type: String, require: true }, // 비밀번호
     name: { type: String, require: true }, // 이름
     phone: { type: String, require: true }, // 핸드폰 번호. 010xxxx0000 형식
+    age_Range: { type: String }, // 나이범위
+    gender: { type: String }, // 성별
+    thumbnail_Image: { type: String }, // 카카오썸네일이미지
+    profile_Image: { type: String }, // 카카오프로파일이미지
     addresses: [
       {
         destination: { type: String }, // 배송지명
