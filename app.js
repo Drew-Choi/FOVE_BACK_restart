@@ -6,7 +6,7 @@ require('dotenv').config();
 
 // db연결
 require('./mongooseConnect');
-const User = require('./models/user');
+// const User = require('./models/user');
 
 const app = express();
 
@@ -16,6 +16,12 @@ app.use(cors());
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// ------CSP-----
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'nonce-<my-nonce-value>'");
+  next();
+});
 
 // ------------------- 라우터 -------------------
 const cartRouter = require('./routes/cart');
@@ -57,17 +63,31 @@ app.get('/dott', async (req, res) => {
 });
 
 // 카카오로그인
-app.post('/kakaocb', async (req, res) => {
+app.get('/kakaocb', async (req, res) => {
   try {
     const { code } = await req.query;
-    const responseToken = await axios.post('https://kauth.kakao.com/oauth/token', {
-      grant_type: 'authorization_code',
-      client_id: process.env.REST_API_KEY,
-      redirect_uri: process.env.REDIRECT_URI_BACK,
-      code,
-    });
+    console.log(code);
+    const responseToken = await axios.post(
+      'https://kauth.kakao.com/oauth/token',
+      {
+        grant_type: 'authorization_code',
+        client_id: process.env.REST_API_KEY,
+        redirect_uri: process.env.REDIRECT_URI_BACK,
+        code,
+        client_secret: process.env.CLIENT_SECRET_KEY,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+        },
+      },
+    );
 
     const { access_token, refresh_token } = responseToken.data;
+    console.log(access_token);
+    console.log(refresh_token);
+
+    res.send('토큰 성공');
 
     // access_token으로 카카오회원 정보 가져오기
     const kakaoUserInfo = await axios.get('https://kapi.kakao.com/v2/user/me', {
@@ -76,40 +96,39 @@ app.post('/kakaocb', async (req, res) => {
         'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
       },
     });
-    console.log(kakaoUserInfo.data);
     const kakaoId = await kakaoUserInfo.data.kakao_account.email;
+    console.log(kakaoId);
 
-    // 몽고DB 아이디 중복여부 체크
-    const duplicatedUser = await User.findOne({ id: kakaoId });
+    // // 몽고DB 아이디 중복여부 체크
+    // const duplicatedUser = await User.findOne({ id: kakaoId });
 
-    if (duplicatedUser) {
-      await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
-      res.status(200).send(kakaoId);
-    } else {
-      const newUser = {
-        id: kakaoId,
-        password: 'none',
-        name: kakaoUserInfo.data.properties.nickname,
-        phone: '',
-        addresses: [
-          {
-            destination: kakaoUserInfo.data.properties.nickname,
-            recipient: kakaoUserInfo.data.properties.nickname,
-            address: '',
-            addressDetail: '',
-            zipCode: '',
-            recipientPhone: '',
-            isDefault: true,
-          },
-        ],
-        accessToken: access_token,
-        refreshToken: refresh_token,
-      };
+    // if (duplicatedUser) {
+    //   await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
+    //   res.status(200);
+    // } else {
+    //   const newUser = {
+    //     id: kakaoId,
+    //     password: 'none',
+    //     name: kakaoUserInfo.data.properties.nickname,
+    //     phone: '',
+    //     addresses: [
+    //       {
+    //         destination: kakaoUserInfo.data.properties.nickname,
+    //         recipient: kakaoUserInfo.data.properties.nickname,
+    //         address: '',
+    //         addressDetail: '',
+    //         zipCode: '',
+    //         recipientPhone: '',
+    //         isDefault: true,
+    //       },
+    //     ],
+    //     accessToken: access_token,
+    //     refreshToken: refresh_token,
+    //   };
 
-      const user = new User(newUser);
-      await user.save();
-      res.status(200).send(kakaoId);
-    }
+    //   await User.create(newUser);
+    //   res.status(200);
+    // }
   } catch (error) {
     console.error(error);
     console.log(error);
