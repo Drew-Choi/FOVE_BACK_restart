@@ -127,10 +127,10 @@ app.get('/kakaocb', async (req, res) => {
       await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
 
       // 세션발행
-      req.session.user = {
-        id: kakaoId,
-        loggedIn: true,
-      };
+      // req.session.user = {
+      //   id: kakaoId,
+      //   loggedIn: true,
+      // };
 
       res.status(200).redirect(REDIRECT_URI);
     } else {
