@@ -14,7 +14,13 @@ const app = express();
 
 const { PORT } = process.env;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:3000', // 허용할 프론트엔드 도메인과 포트 설정
+    credentials: true, // 쿠키 전달을 허용하기 위해 credentials 옵션을 true로 설정
+  }),
+);
+
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -68,6 +74,7 @@ app.use('/mypage', mypageRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
+
 // env중요키 서버요청
 app.get('/dott', async (req, res) => {
   const { key } = req.query;
@@ -84,7 +91,6 @@ app.get('/dott', async (req, res) => {
 app.get('/kakaocb', async (req, res) => {
   try {
     const { code } = await req.query;
-    console.log(code);
     const responseToken = await axios.post(
       'https://kauth.kakao.com/oauth/token',
       {
@@ -102,8 +108,6 @@ app.get('/kakaocb', async (req, res) => {
     );
 
     const { access_token, refresh_token } = responseToken.data;
-    console.log(access_token);
-    console.log(refresh_token);
 
     // access_token으로 카카오회원 정보 가져오기
     const kakaoUserInfo = await axios.get('https://kapi.kakao.com/v2/user/me', {
@@ -113,11 +117,8 @@ app.get('/kakaocb', async (req, res) => {
       },
     });
 
-    console.log(kakaoUserInfo);
     const kakaoId = await kakaoUserInfo.data.kakao_account.email;
     const nickname = await kakaoUserInfo.data.kakao_account.profile.nickname;
-    const { REDIRECT_URI } = process.env;
-    console.log(nickname);
 
     // 몽고DB 아이디 중복여부 체크
     const duplicatedUser = await User.findOne({ id: kakaoId });
@@ -127,12 +128,12 @@ app.get('/kakaocb', async (req, res) => {
       await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
 
       // 세션발행
-      // req.session.user = {
-      //   id: kakaoId,
-      //   loggedIn: true,
-      // };
+      req.session.user = {
+        id: kakaoId,
+        loggedIn: true,
+      };
 
-      res.status(200).redirect(REDIRECT_URI);
+      res.status(200).redirect('http://localhost:3000/store');
     } else {
       const newUser = {
         id: kakaoId,
@@ -166,12 +167,42 @@ app.get('/kakaocb', async (req, res) => {
         loggedIn: true,
       };
 
-      res.status(200).redirect(REDIRECT_URI);
+      res.status(200).redirect('http://localhost:3000/store');
     }
   } catch (error) {
     console.error(error);
     console.log(error);
-    res.status(400).send('로그인 실패');
+    res.status(400).send(console.log('로그인 실패'));
+  }
+});
+
+// 프론트 쿠키 처리하여 로그인 유지
+app.get('/islogin', async (req, res) => {
+  try {
+    const { cookie } = req.headers;
+
+    const sessionCookie = cookie.split(';').find((el) => el.trim().startsWith('connect.sid='));
+    const sessionId = sessionCookie.split('=')[1];
+
+    const sessionData = req.sessionStore.sessions(sessionId);
+
+    const userId = JSON.parse(sessionData).user.id;
+    console.log(userId);
+
+    const duplicatedUser = await User.findOne({ id: userId });
+
+    if (duplicatedUser) {
+      const loginUserInfo = {
+        name: duplicatedUser.name,
+        points: duplicatedUser.points,
+      };
+      res.status(200).send(loginUserInfo);
+    } else {
+      res.status(401);
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(400).send(console.log('인증실패'));
   }
 });
 
