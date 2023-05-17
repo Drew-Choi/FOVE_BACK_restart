@@ -107,7 +107,7 @@ app.get('/kakaocb', async (req, res) => {
       },
     );
 
-    const { access_token, refresh_token } = responseToken.data;
+    const { access_token } = responseToken.data;
 
     // access_token으로 카카오회원 정보 가져오기
     const kakaoUserInfo = await axios.get('https://kapi.kakao.com/v2/user/me', {
@@ -125,7 +125,7 @@ app.get('/kakaocb', async (req, res) => {
     console.log(duplicatedUser);
 
     if (duplicatedUser) {
-      await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token, refreshToken: refresh_token } });
+      await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token } });
 
       // 세션발행
       req.session.user = {
@@ -155,8 +155,6 @@ app.get('/kakaocb', async (req, res) => {
             isDefault: true,
           },
         ],
-        accessToken: access_token,
-        refreshToken: refresh_token,
       };
 
       await User.create(newUser);
@@ -179,27 +177,24 @@ app.get('/kakaocb', async (req, res) => {
 // 프론트 쿠키 처리하여 로그인 유지
 app.get('/islogin', async (req, res) => {
   try {
-    const { cookie } = req.headers;
-
-    const sessionCookie = cookie.split(';').find((el) => el.trim().startsWith('connect.sid='));
-    const sessionId = sessionCookie.split('=')[1];
-
-    const sessionData = req.sessionStore.sessions(sessionId);
-
-    const userId = JSON.parse(sessionData).user.id;
-    console.log(userId);
-
-    const duplicatedUser = await User.findOne({ id: userId });
-
-    if (duplicatedUser) {
-      const loginUserInfo = {
-        name: duplicatedUser.name,
-        points: duplicatedUser.points,
-      };
-      res.status(200).send(loginUserInfo);
+    const cookies = req.headers.cookie;
+    if (cookies) {
+      console.log(cookies);
     } else {
-      res.status(401);
+      console.log('실패');
     }
+
+    // const duplicatedUser = await User.findOne({ id: userId });
+    // if (duplicatedUser) {
+    //   const loginUserInfo = {
+    //     name: duplicatedUser.name,
+    //     points: duplicatedUser.points,
+    //   };
+    //   res.status(200).send(loginUserInfo);
+    // } else {
+    //   res.status(401);
+    // }
+    res.send(console.log('성공'));
   } catch (err) {
     console.error(err);
     res.status(400).send(console.log('인증실패'));
