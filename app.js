@@ -191,17 +191,9 @@ app.get('/islogin', async (req, res) => {
       const sessionID = decodeURIComponent(cookieValue);
       console.log('세션 ID:', sessionID);
 
-      await req.sessionStore.get(sessionID, (error, sessionData) => {
-        if (error) {
-          console.error(error);
-          res.status(500).send(console.log('세션 데이터 조회 중 오류가 발생'));
-          // eslint-disable-next-line no-useless-return
-          return;
-        }
-        const id = sessionData?.user?.id;
-        console.log(`회원아이디 : ${id}`);
-        res.send(console.log('세션 데이터 조회완료'));
-      });
+      const sessionData = req.sessionStore.sessions[sessionID];
+      const userId = sessionData ? JSON.parse(sessionData).user.id : null;
+      console.log(`회원아이디 : ${userId}`);
     }
 
     // const duplicatedUser = await User.findOne({ id: userId });
