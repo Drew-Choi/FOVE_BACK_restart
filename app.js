@@ -2,6 +2,7 @@
 const express = require('express');
 const axios = require('axios');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 const crypto = require('crypto');
 const cors = require('cors');
 require('dotenv').config();
@@ -14,6 +15,7 @@ const app = express();
 
 const { PORT } = process.env;
 
+app.use(cookieParser());
 app.use(
   cors({
     origin: 'http://localhost:3000', // 허용할 프론트엔드 도메인과 포트 설정
@@ -178,10 +180,28 @@ app.get('/kakaocb', async (req, res) => {
 app.get('/islogin', async (req, res) => {
   try {
     const cookies = req.headers.cookie;
-    if (cookies) {
-      console.log(cookies);
-    } else {
-      console.log('실패');
+    const cookiesArr = cookies.split(';');
+    const cookieTrim = cookiesArr.map((el) => el.trim());
+    const cookieFilter = cookieTrim.filter((el) => el.startsWith('connect.sid='));
+
+    if (cookieFilter) {
+      const cookieValueSplit = cookieFilter[0].split('=');
+      const cookieValue = cookieValueSplit[1].trim();
+
+      const sessionID = decodeURIComponent(cookieValue);
+      console.log('세션 ID:', sessionID);
+
+      await req.sessionStore.get(sessionID, (error, sessionData) => {
+        if (error) {
+          console.error(error);
+          res.status(500).send(console.log('세션 데이터 조회 중 오류가 발생'));
+          // eslint-disable-next-line no-useless-return
+          return;
+        }
+        const id = sessionData?.user?.id;
+        console.log(`회원아이디 : ${id}`);
+        res.send(console.log('세션 데이터 조회완료'));
+      });
     }
 
     // const duplicatedUser = await User.findOne({ id: userId });
