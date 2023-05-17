@@ -159,6 +159,29 @@ app.get('/kakaocb', async (req, res) => {
 });
 
 // 로그인 유지 미들웨어
+app.post('/islogin', (req, res) => {
+  const { JWT_ACCESS_SECRET } = process.env;
+  jwt.verify(req.body.token, JWT_ACCESS_SECRET, async (err, decoded) => {
+    if (err) return res.status(401).json({ message: '토큰 기한 만료. 로그아웃.' });
+
+    // 토큰 검증 성공
+    const duplicatedUser = await User.findOne({ id: decoded.id });
+    console.log(`토큰을 통한 회원정보 : ${duplicatedUser}`);
+    if (duplicatedUser) {
+      console.log(`토큰을 네임 : ${duplicatedUser.name}`);
+      console.log(`토큰을 포인트 : ${duplicatedUser.points}`);
+      res.status(200).json({
+        nickName: duplicatedUser.name,
+        points: duplicatedUser.points,
+        isAdmin: false,
+        isLogin: true,
+        message: '토큰 검증 완료',
+      });
+    } else {
+      res.status(400).json({ message: '회원이 아닙니다.' });
+    }
+  });
+});
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
