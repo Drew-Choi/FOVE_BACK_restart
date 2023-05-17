@@ -1,10 +1,8 @@
 /* eslint-disable camelcase */
 const express = require('express');
 const axios = require('axios');
-const session = require('express-session');
-const cookieParser = require('cookie-parser');
-const crypto = require('crypto');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 // db연결
@@ -15,39 +13,17 @@ const app = express();
 
 const { PORT } = process.env;
 
-app.use(cookieParser());
-app.use(
-  cors({
-    origin: 'http://localhost:3000', // 허용할 프론트엔드 도메인과 포트 설정
-    credentials: true, // 쿠키 전달을 허용하기 위해 credentials 옵션을 true로 설정
-  }),
-);
+app.use(cors());
 
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // ------CSP-----
-app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'nonce-<my-nonce-value>'");
-  next();
-});
-
-// session설정(쿠키)
-// eslint-disable-next-line no-undef
-const secretKey = crypto.randomBytes(64).toString('hex');
-app.use(
-  session({
-    secret: secretKey,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false,
-      maxAge: 1000 * 60 * 60,
-    },
-  }),
-);
+// app.use((req, res, next) => {
+//   res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'nonce-<my-nonce-value>'");
+//   next();
+// });
 
 // ------------------- 라우터 -------------------
 const cartRouter = require('./routes/cart');
@@ -125,17 +101,21 @@ app.get('/kakaocb', async (req, res) => {
     // 몽고DB 아이디 중복여부 체크
     const duplicatedUser = await User.findOne({ id: kakaoId });
     console.log(duplicatedUser);
-
+    const { JWT_ACCESS_SECRET } = process.env;
     if (duplicatedUser) {
       await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token } });
-
-      // 세션발행
-      req.session.user = {
-        id: kakaoId,
-        loggedIn: true,
-      };
-
-      res.status(200).redirect('http://localhost:3000/store');
+      const accessToken = jwt.sign(
+        {
+          id: kakaoId,
+        },
+        JWT_ACCESS_SECRET,
+        { expiresIn: '1h' },
+      );
+      const redirectURL = 'http://localhost:3000/login/kakao/callback';
+      const data = { key: accessToken };
+      const query = new URLSearchParams(data).toString();
+      const finalURL = `${redirectURL}?${query}`;
+      res.status(200).redirect(finalURL);
     } else {
       const newUser = {
         id: kakaoId,
@@ -158,60 +138,27 @@ app.get('/kakaocb', async (req, res) => {
           },
         ],
       };
-
       await User.create(newUser);
-
-      // 세션발행
-      req.session.user = {
-        id: kakaoId,
-        loggedIn: true,
-      };
-
-      res.status(200).redirect('http://localhost:3000/store');
+      const accessToken = jwt.sign(
+        {
+          id: kakaoId,
+        },
+        JWT_ACCESS_SECRET,
+        { expiresIn: '1h' },
+      );
+      const redirectURL = 'http://localhost:3000/login/kakao/callback';
+      const data = { key: accessToken };
+      const query = new URLSearchParams(data).toString();
+      const finalURL = `${redirectURL}?${query}`;
+      res.status(200).redirect(finalURL);
     }
   } catch (error) {
     console.error(error);
-    console.log(error);
     res.status(400).send(console.log('로그인 실패'));
   }
 });
 
-// 프론트 쿠키 처리하여 로그인 유지
-app.get('/islogin', async (req, res) => {
-  try {
-    const cookies = req.headers.cookie;
-    const cookiesArr = cookies.split(';');
-    const cookieTrim = cookiesArr.map((el) => el.trim());
-    const cookieFilter = cookieTrim.filter((el) => el.startsWith('connect.sid='));
-
-    if (cookieFilter) {
-      const cookieValueSplit = cookieFilter[0].split('=');
-      const cookieValue = cookieValueSplit[1].trim();
-
-      const sessionID = decodeURIComponent(cookieValue);
-      console.log('세션 ID:', sessionID);
-
-      const sessionData = req.sessionStore.sessions[sessionID];
-      const userId = sessionData ? JSON.parse(sessionData).user.id : null;
-      console.log(`회원아이디 : ${userId}`);
-    }
-
-    // const duplicatedUser = await User.findOne({ id: userId });
-    // if (duplicatedUser) {
-    //   const loginUserInfo = {
-    //     name: duplicatedUser.name,
-    //     points: duplicatedUser.points,
-    //   };
-    //   res.status(200).send(loginUserInfo);
-    // } else {
-    //   res.status(401);
-    // }
-    res.send(console.log('성공'));
-  } catch (err) {
-    console.error(err);
-    res.status(400).send(console.log('인증실패'));
-  }
-});
+// 로그인 유지 미들웨어
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
