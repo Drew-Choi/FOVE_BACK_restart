@@ -13,6 +13,7 @@ const getCartInfo = async (req, res) => {
       // 토큰인증 성공시
       const userCart = await Cart.findOne({ user: decoded.id });
       let totalQuantity = 0;
+
       if (!userCart.products) {
         totalQuantity = 0;
       } else {
@@ -32,8 +33,9 @@ const getCartInfo = async (req, res) => {
 // ---------------------------- 상품 상세페이지에서 해당상품 장바구니에 추가 ----------------------------
 const addProductToCart = async (req, res) => {
   try {
+    const { JWT_ACCESS_SECRET } = process.env;
     // req.boy의 상품 정보들을 구조분해 할당으로 매칭시켜 변수 저장
-    const { userId } = req.params;
+    const { token } = req.body;
     const { productName, img, price, size, quantity, unitSumPrice } = req.body;
 
     // req.body로 받은 상품 정보들을 product라는 객체 형태의 변수에 저장
@@ -46,54 +48,58 @@ const addProductToCart = async (req, res) => {
       unitSumPrice,
     };
 
-    const userCart = await Cart.findOne({ user: userId });
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 오류 및 기한 만료' });
 
-    // cart가 생성되어있지 않으면 cart 생성하고 userId와 products 배열에 product 정보 넣어서 DB 저장
-    if (!userCart) {
-      const newCart = new Cart({
-        user: userId,
-        products: [product],
-      });
-      await newCart.save();
-      res.status(200).json({ message: '장바구니 담기 성공1', newCart });
-      return;
-    }
+      // 토큰 성공시
+      const userCart = await Cart.findOne({ user: decoded.id });
+      // cart가 생성되어있지 않으면 cart 생성하고 userId와 products 배열에 product 정보 넣어서 DB 저장
+      if (!userCart) {
+        const newCart = new Cart({
+          user: decoded.id,
+          products: [product],
+        });
+        await newCart.save();
+        res.status(200).json({ message: '장바구니 담기 성공1', newCart });
+        return;
+      }
 
-    // cart는 생성되어있는데 cart 안에 들어있는 상품이 없을 때
-    if (userCart.products.length === 0) {
-      userCart.products = [product];
+      // cart는 생성되어있는데 cart 안에 들어있는 상품이 없을 때
+      if (userCart.products.length === 0) {
+        userCart.products = [product];
+        await userCart.save();
+        res.status(200).json({ message: '장바구니 담기 성공2', userCart });
+        return;
+      }
+
+      // cart는 생성 돼있는데 products 배열이 없거나 products 배열에 담긴 product가 없을 때
+      // if (!userCart.products || !userCart.products.length) {
+      //   userCart.products = [product];
+      //   await userCart.save();
+      //   res.status(200).json('장바구니 담기 성공2');
+      //   return; // 다음 코드 실행 안되게
+      // }
+
+      // 장바구니에 상품이 있으면 추가하려는 상품과 동일한 옴션의 상품이 있는지 확인 후 sameProduct 배열에 저장
+      const sameProduct = userCart.products.find(
+        (productEl) => productName === productEl.productName && size === productEl.size,
+      );
+
+      // 동일한 상품이 없으면 추가
+      if (!sameProduct) {
+        userCart.products.push(product);
+        await userCart.save();
+        res.status(200).json({ message: '장바구니 담기 성공3', userCart });
+        return;
+      }
+
+      // // 장바구니에 동일한 옵션의 상품이 있을 경우 상품을 추가하지 않고 기존에 들어있는 상품의 quantity에 req.body의 quantity를 더해 증감시키기
+      sameProduct.quantity += quantity;
+      sameProduct.unitSumPrice = sameProduct.price * sameProduct.quantity;
+
       await userCart.save();
-      res.status(200).json({ message: '장바구니 담기 성공2', userCart });
-      return;
-    }
-
-    // cart는 생성 돼있는데 products 배열이 없거나 products 배열에 담긴 product가 없을 때
-    // if (!userCart.products || !userCart.products.length) {
-    //   userCart.products = [product];
-    //   await userCart.save();
-    //   res.status(200).json('장바구니 담기 성공2');
-    //   return; // 다음 코드 실행 안되게
-    // }
-
-    // 장바구니에 상품이 있으면 추가하려는 상품과 동일한 옴션의 상품이 있는지 확인 후 sameProduct 배열에 저장
-    const sameProduct = userCart.products.find(
-      (productEl) => productName === productEl.productName && size === productEl.size,
-    );
-
-    // 동일한 상품이 없으면 추가
-    if (!sameProduct) {
-      userCart.products.push(product);
-      await userCart.save();
-      res.status(200).json({ message: '장바구니 담기 성공3', userCart });
-      return;
-    }
-
-    // // 장바구니에 동일한 옵션의 상품이 있을 경우 상품을 추가하지 않고 기존에 들어있는 상품의 quantity에 req.body의 quantity를 더해 증감시키기
-    sameProduct.quantity += quantity;
-    sameProduct.unitSumPrice = sameProduct.price * sameProduct.quantity;
-
-    await userCart.save();
-    res.status(200).json({ message: '기존 상품 수량 증가', userCart });
+      res.status(200).json({ message: '기존 상품 수량 증가', userCart });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json('장바구니 담기 실패');
@@ -103,20 +109,27 @@ const addProductToCart = async (req, res) => {
 // ---------------------------- 장바구니 특정 상품 하나 삭제 ----------------------------
 const removeCartItem = async (req, res) => {
   try {
-    const { userId, productId } = req.params;
+    const { JWT_ACCESS_SECRET } = process.env;
+    const { token } = req.body;
+    const { productId } = req.params;
 
-    const userCart = await Cart.findOne({ user: userId });
-    if (!userCart) {
-      res.status(404).json('장바구니 없음');
-      return;
-    }
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
 
-    const updatedCart = await Cart.findOneAndUpdate(
-      { _id: userCart._id },
-      { $pull: { products: { _id: productId } } },
-      { new: true }, // 업데이트된 내용 반환을 위해 new: true
-    );
-    res.status(200).json({ messege: '장바구이에서 해당 상품 삭제 성공', updatedCart });
+      // 토큰 인증 성공시
+      const userCart = await Cart.findOne({ user: decoded.id });
+      if (!userCart) {
+        res.status(404).json('장바구니 없음');
+        return;
+      }
+
+      const updatedCart = await Cart.findOneAndUpdate(
+        { _id: userCart._id },
+        { $pull: { products: { _id: productId } } },
+        { new: true }, // 업데이트된 내용 반환을 위해 new: true
+      );
+      res.status(200).json({ messege: '장바구이에서 해당 상품 삭제 성공', updatedCart });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json('상품 삭제 실패');
@@ -126,19 +139,27 @@ const removeCartItem = async (req, res) => {
 // ---------------------------- 장바구니 비우기 ----------------------------
 const cleanCart = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const userCart = await Cart.findOne({ user: userId });
+    const { JWT_ACCESS_SECRET } = req.body;
+    const { token } = req.body;
+    console.log(token);
 
-    if (!userCart) {
-      res.status(404).json('장바구니 없음');
-      return;
-    }
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
 
-    userCart.products = [];
-    await userCart.save();
-    // const updatedCart = await Cart.findOneAndUpdate({ _id: cart._id }, { $set: { products: [] } }, { new: true });
+      // 토큰 성공시
+      const userCart = await Cart.findOne({ user: decoded.id });
 
-    res.status(200).json({ messege: '장바구이에서 비우기 성공', userCart });
+      if (!userCart) {
+        res.status(404).json('장바구니 없음');
+        return;
+      }
+
+      userCart.products = [];
+      await userCart.save();
+      // const updatedCart = await Cart.findOneAndUpdate({ _id: cart._id }, { $set: { products: [] } }, { new: true });
+
+      res.status(200).json({ messege: '장바구이에서 비우기 성공', userCart });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json('장바구니 비우기 실패');
