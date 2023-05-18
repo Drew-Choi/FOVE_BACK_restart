@@ -13,7 +13,11 @@ const app = express();
 
 const { PORT } = process.env;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+  }),
+);
 
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
@@ -36,6 +40,7 @@ const registerRouter = require('./routes/register');
 const boardRouter = require('./routes/board');
 const noticeRouter = require('./routes/notice');
 const mypageRouter = require('./routes/mypage');
+const tossRouter = require('./routes/toss');
 // const orderRouter = require('./routes/order');
 
 app.use('/cart', cartRouter);
@@ -49,6 +54,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/board', boardRouter);
 app.use('/notice', noticeRouter);
 app.use('/mypage', mypageRouter);
+app.use('/toss', tossRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------

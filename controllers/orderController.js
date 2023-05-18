@@ -1,4 +1,6 @@
+const jwt = require('jsonwebtoken');
 const Order = require('../models/order');
+
 // const User = require('../models/user');
 // const product = require('../models/product');
 
@@ -35,7 +37,6 @@ const addOrder = async (req, res) => {
     // if (!user) {
     //   return res.status(404).json({ message: 'User not found' });
     // }
-
     const {
       // 들어갈 내용 : status,approvedAt,method
       // 상의할것 : 토탈 금액 알아서? 할인도 그전에 처리되는건지 ?
@@ -69,78 +70,84 @@ const addOrder = async (req, res) => {
       phoneMidNum,
       phoneLastNum,
     } = req.body;
+
+    const { JWT_ACCESS_SECRET } = process.env;
+    jwt.verify(name, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
+
+      // 토큰인증 성공시
+      const order = await Order.findOne();
+      // const product = [
+      //   {
+      //     productName,
+      //     img,
+      //     price,
+      //     size,
+      //     color,
+      //     quantity,
+      //     unitSumPrice,
+      //   },
+      // ];
+      const user = decoded.id;
+      const recipient = {
+        address,
+        phone,
+        email,
+        recipientName,
+        recipientZipcode,
+        recipientAddress,
+        recipientAddressDetail,
+        telAreaCode,
+        telMidNum,
+        telLastNum,
+        phoneCode,
+        phoneMidNum,
+        phoneLastNum,
+      };
+
+      const sumPrice = unitSumPrice;
+
+      if (!order) {
+        const newOrder = new Order({
+          // userId,
+          // user,
+          user,
+          payments,
+          recipient,
+          products,
+          message,
+          isOrdered,
+          isShipping,
+          isDelivered,
+          isReturn,
+          // paymentMethod,
+          sumPrice,
+        });
+        await newOrder.save();
+      } else {
+        const newOrder = new Order({
+          // userId,
+          // user,
+          payments,
+          user,
+          recipient,
+          products,
+          message,
+          isOrdered,
+          isShipping,
+          isDelivered,
+          isReturn,
+          paymentMethod,
+          sumPrice,
+        });
+        await newOrder.save();
+      }
+      // const populatedOrder = await Order.findById(userId).populate('user', 'name');
+      // res.status(200).json(populatedOrder);
+      res.status(200).json('주문하기 성공 최두루 아이스크림 사줘');
+    });
     // const userId = '12345';
     // const userId = req.user._id;
-
-    const order = await Order.findOne();
-    // const product = [
-    //   {
-    //     productName,
-    //     img,
-    //     price,
-    //     size,
-    //     color,
-    //     quantity,
-    //     unitSumPrice,
-    //   },
-    // ];
-    const user = name;
-    const recipient = {
-      address,
-      phone,
-      email,
-      recipientName,
-      recipientZipcode,
-      recipientAddress,
-      recipientAddressDetail,
-      telAreaCode,
-      telMidNum,
-      telLastNum,
-      phoneCode,
-      phoneMidNum,
-      phoneLastNum,
-    };
-
-    const sumPrice = unitSumPrice;
-
-    if (!order) {
-      const newOrder = new Order({
-        // userId,
-        // user,
-        user,
-        payments,
-        recipient,
-        products,
-        message,
-        isOrdered,
-        isShipping,
-        isDelivered,
-        isReturn,
-        // paymentMethod,
-        sumPrice,
-      });
-      await newOrder.save();
-    } else {
-      const newOrder = new Order({
-        // userId,
-        // user,
-        payments,
-        user,
-        recipient,
-        products,
-        message,
-        isOrdered,
-        isShipping,
-        isDelivered,
-        isReturn,
-        paymentMethod,
-        sumPrice,
-      });
-      await newOrder.save();
-    }
-    // const populatedOrder = await Order.findById(userId).populate('user', 'name');
-    // res.status(200).json(populatedOrder);
-    res.status(200).json('주문하기 성공 최두루 아이스크림 사줘');
   } catch (err) {
     console.error(err);
     res.status(500).json('주문하기 실패');
