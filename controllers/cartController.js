@@ -139,9 +139,8 @@ const removeCartItem = async (req, res) => {
 // ---------------------------- 장바구니 비우기 ----------------------------
 const cleanCart = async (req, res) => {
   try {
-    const { JWT_ACCESS_SECRET } = req.body;
+    const { JWT_ACCESS_SECRET } = process.env;
     const { token } = req.body;
-    console.log(token);
 
     jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
       if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
@@ -169,25 +168,33 @@ const cleanCart = async (req, res) => {
 // ---------------------------- 장바구니 상품 카운팅 + 1 ----------------------------
 const cartProductQtyPlus = async (req, res) => {
   try {
-    const { userId, productId } = req.params;
-    const userCart = await Cart.findOne({ user: userId });
+    const { JWT_ACCESS_SECRET } = process.env;
+    const { token } = req.body;
+    const { productId } = req.params;
 
-    if (!userCart) {
-      return res.status(404).json('장바구니 없음');
-    }
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
 
-    const product = await userCart.products.find((productEl) => productEl._id.toString() === productId);
-    // productEl 의 _id 속성을 문자열로 변환해야 비교가 됨
+      // 토큰 인증 완료시
+      const userCart = await Cart.findOne({ user: decoded.id });
 
-    if (!product) {
-      return res.status(404).json('일치하는 상품 없음');
-    }
+      if (!userCart) {
+        return res.status(404).json('장바구니 없음');
+      }
 
-    product.quantity += 1;
-    product.unitSumPrice = product.price * product.quantity;
+      const product = await userCart.products.find((productEl) => productEl._id.toString() === productId);
+      // productEl 의 _id 속성을 문자열로 변환해야 비교가 됨
 
-    await userCart.save();
-    res.status(200).json({ messege: '수량 증가 성공', userCart });
+      if (!product) {
+        return res.status(404).json('일치하는 상품 없음');
+      }
+
+      product.quantity += 1;
+      product.unitSumPrice = product.price * product.quantity;
+
+      await userCart.save();
+      res.status(200).json({ messege: '수량 증가 성공', userCart });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json('알 수 없는 에러');
@@ -197,26 +204,34 @@ const cartProductQtyPlus = async (req, res) => {
 // ---------------------------- 장바구니 상품 카운팅 - 1 ----------------------------
 const cartProductQtyMinus = async (req, res) => {
   try {
-    const { userId, productId } = req.params;
-    const userCart = await Cart.findOne({ user: userId });
+    const { JWT_ACCESS_SECRET } = process.env;
+    const { productId } = req.params;
+    const { token } = req.body;
 
-    if (!userCart) {
-      return res.status(404).json('장바구니 없음');
-    }
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
 
-    const product = await userCart.products.find((productEl) => productEl._id.toString() === productId);
-    // productEl 의 _id 속성을 문자열로 변환해야 비교가 됨
+      // 토큰 성공시
+      const userCart = await Cart.findOne({ user: decoded.id });
 
-    if (!product) {
-      return res.status(404).json('일치하는 상품 없음');
-    }
+      if (!userCart) {
+        return res.status(404).json('장바구니 없음');
+      }
 
-    if (product.quantity === 0) return res.send('더이상 감소시킬 수 없음'); // quantity 가 0보다 작아지지 않도록 함
-    product.quantity -= 1;
-    product.unitSumPrice = product.price * product.quantity;
+      const product = await userCart.products.find((productEl) => productEl._id.toString() === productId);
+      // productEl 의 _id 속성을 문자열로 변환해야 비교가 됨
 
-    await userCart.save();
-    res.status(200).json({ messege: '수량 감소 성공', userCart });
+      if (!product) {
+        return res.status(404).json('일치하는 상품 없음');
+      }
+
+      if (product.quantity === 0) return res.send('더이상 감소시킬 수 없음'); // quantity 가 0보다 작아지지 않도록 함
+      product.quantity -= 1;
+      product.unitSumPrice = product.price * product.quantity;
+
+      await userCart.save();
+      res.status(200).json({ messege: '수량 감소 성공', userCart });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json('알 수 없는 에러');

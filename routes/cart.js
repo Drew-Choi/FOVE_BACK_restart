@@ -21,10 +21,10 @@ router.post('/remove/:productId', removeCartItem);
 // 장바구니 비우기 /cart/clean + body.token
 router.post('/clean', cleanCart);
 
-// 장바구니 상품 수량 증가 + 1 /cart/qtyplus/"유저id"/"상품고유코드"
-router.post('/qtyplus/:userId/:productId', cartProductQtyPlus);
+// 장바구니 상품 수량 증가 + 1 /cart/qtyplus/"상품고유코드" + body.token
+router.post('/qtyplus/:productId', cartProductQtyPlus);
 
-// 장바구니 상품 수량 감소 - 1 /cart/qtyminus/"유저id"/"상품고유코드"
-router.post('/qtyminus/:userId/:productId', cartProductQtyMinus);
+// 장바구니 상품 수량 감소 - 1 /cart/qtyminus/"상품고유코드" + body.token
+router.post('/qtyminus/:productId', cartProductQtyMinus);
 
 module.exports = router;
