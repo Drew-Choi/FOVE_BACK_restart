@@ -10,7 +10,7 @@ const {
 } = require('../controllers/cartController');
 
 // 장바구니 정보 불러오기 /cart/list/"유저id"
-router.post('/list/:userId', getCartInfo); // 장바구니 정보 불러오기(장바구니 전체 데이터, 장바구니 products length)
+router.post('/list', getCartInfo); // 장바구니 정보 불러오기(장바구니 전체 데이터, 장바구니 products length)
 
 // 장바구니에 상품 추가 /cart/add/"유저id"
 router.post('/add/:userId', addProductToCart);

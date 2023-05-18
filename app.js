@@ -61,7 +61,7 @@ app.get('/dott', async (req, res) => {
   if (value) {
     res.status(200).json({ key: value });
   } else {
-    res.status(400).json({ error: 'Invalid key' });
+    res.status(400).json({ message: 'Invalid key' });
   }
 });
 
@@ -100,10 +100,8 @@ app.get('/kakaocb', async (req, res) => {
 
     // 몽고DB 아이디 중복여부 체크
     const duplicatedUser = await User.findOne({ id: kakaoId });
-    console.log(duplicatedUser);
     const { JWT_ACCESS_SECRET } = process.env;
     if (duplicatedUser) {
-      await User.updateOne({ id: kakaoId }, { $set: { accessToken: access_token } });
       const accessToken = jwt.sign(
         {
           id: kakaoId,
@@ -154,7 +152,7 @@ app.get('/kakaocb', async (req, res) => {
     }
   } catch (error) {
     console.error(error);
-    res.status(400).send(console.log('로그인 실패'));
+    res.status(400).json({ message: '로그인 실패' });
   }
 });
 
@@ -166,10 +164,7 @@ app.post('/islogin', (req, res) => {
 
     // 토큰 검증 성공
     const duplicatedUser = await User.findOne({ id: decoded.id });
-    console.log(`토큰을 통한 회원정보 : ${duplicatedUser}`);
     if (duplicatedUser) {
-      console.log(`토큰을 네임 : ${duplicatedUser.name}`);
-      console.log(`토큰을 포인트 : ${duplicatedUser.points}`);
       res.status(200).json({
         nickName: duplicatedUser.name,
         points: duplicatedUser.points,

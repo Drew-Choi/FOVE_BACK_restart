@@ -1,21 +1,28 @@
+const jwt = require('jsonwebtoken');
 const Cart = require('../models/cart');
 const User = require('../models/user');
 
 // ---------------------------- 장바구니 정보 조회(전체 상품 데이터, length) ----------------------------
 const getCartInfo = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const userCart = await Cart.findOne({ user: userId });
-    let totalQuantity = 0;
-    if (!userCart.products) {
-      totalQuantity = 0;
-    } else {
-      totalQuantity = userCart.products.reduce((sum, product) => sum + product.quantity, 0);
-    } // 상품별 quantity 모두 더하기
+    const { JWT_ACCESS_SECRET } = process.env;
+    jwt.verify(req.body.token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      // 토큰인증 실패시
+      if (err) return res.status(401).json({ message: '토큰 기한 만료' });
 
-    if (!userCart || userCart.length === 0) return res.status(404).json('장바구니 정보가 없습니다.');
+      // 토큰인증 성공시
+      const userCart = await Cart.findOne({ user: decoded.id });
+      let totalQuantity = 0;
+      if (!userCart.products) {
+        totalQuantity = 0;
+      } else {
+        totalQuantity = userCart.products.reduce((sum, product) => sum + product.quantity, 0);
+      } // 상품별 quantity 모두 더하기
 
-    res.status(200).json({ products: userCart.products, cartQuantity: totalQuantity });
+      if (!userCart || userCart.length === 0) return res.status(404).json('장바구니 정보가 없습니다.');
+
+      return res.status(200).json({ products: userCart.products, cartQuantity: totalQuantity });
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json('장바구니 조회 실패');
