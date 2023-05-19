@@ -1,11 +1,8 @@
 const { default: axios } = require('axios');
-const session = require('express-session');
 
 // toss쿼리문 받기
 const tossApprove = async (req, res) => {
   try {
-    req.session.cashData = null;
-
     const { amount } = req.query;
     const { orderId } = req.query;
     const { paymentKey } = req.query;
@@ -35,6 +32,7 @@ const tossApprove = async (req, res) => {
       // eslint-disable-next-line no-unused-expressions
       if (response.status === 200) {
         req.session.cashData = await response.data;
+        console.log('앞선', req.session.cashData);
         res.status(200).redirect('http://localhost:3000/store/order_success');
       } else {
         res.status(401).json('인가실패');
@@ -48,20 +46,13 @@ const tossApprove = async (req, res) => {
   }
 };
 
-const paymentData = async (req, res) => {
+const paymentData = (req, res) => {
   try {
-    const { cashData } = req.session;
+    // eslint-disable-next-line prefer-destructuring
+    const cashData = req.session.cashData;
     console.log(cashData);
 
     if (cashData) {
-      req.session.destroy((err) => {
-        if (err) {
-          console.error('세션 초기화 중 에러 발생', err);
-          res.status(500).json({ message: '세션 초기화 중 에러 발생' });
-        } else {
-          console.log('세션초기화완료');
-        }
-      });
       console.log('실제로 보내는 캐쉬데이터', cashData);
       res.status(200).json(cashData);
     } else {
