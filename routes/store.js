@@ -7,7 +7,7 @@ const {
   searchProduct,
 } = require('../controllers/productController');
 
-const { sendOrder, addOrder } = require('../controllers/orderController');
+const { addOrder } = require('../controllers/orderController');
 
 // 'store' 페이지 /store
 router.get('/', getAllProducts); // 전체 상품 데이터 가져오기

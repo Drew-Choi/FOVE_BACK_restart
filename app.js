@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 const express = require('express');
-const axios = require('axios');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
@@ -14,6 +13,7 @@ const app = express();
 require('./mongooseConnect');
 const User = require('./models/user');
 
+// 포트설정
 const { PORT } = process.env;
 
 // CORS 허용포트 설정
@@ -23,14 +23,13 @@ app.use(
   }),
 );
 
-// 특정API세션으로 인한 허용
+// 특정 미들웨어에 세션 통신을 위한 허용
 app.use('/toss/data', (req, res, next) => {
   // CORS 설정
   res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
-
   next();
 });
 
@@ -40,6 +39,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // 쿠키파서 설정
 app.use(cookieParser());
+
 // 세션설정
 app.use(
   session({
@@ -53,38 +53,28 @@ app.use(
   }),
 );
 
-// ------CSP-----
-// app.use((req, res, next) => {
-//   res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'nonce-<my-nonce-value>'");
-//   next();
-// });
-
 // ------------------- 라우터 -------------------
 const cartRouter = require('./routes/cart');
-const userRouter = require('./routes/user');
-const loginRouter = require('./routes/login');
 const adminRouter = require('./routes/admin');
 const productRouter = require('./routes/product');
 const storeRouter = require('./routes/store');
-const registerRouter = require('./routes/register');
 const boardRouter = require('./routes/board');
 const noticeRouter = require('./routes/notice');
 const mypageRouter = require('./routes/mypage');
 const tossRouter = require('./routes/toss');
+const kakaoRouter = require('./routes/kakao');
 // const orderRouter = require('./routes/order');
 
 app.use('/cart', cartRouter);
-app.use('/user', userRouter);
-app.use('/login', loginRouter);
 app.use('/admin', adminRouter);
 app.use('/product', productRouter);
 app.use('/store', storeRouter);
-app.use('/register', registerRouter);
 app.use('/uploads', express.static('uploads'));
 app.use('/board', boardRouter);
 app.use('/notice', noticeRouter);
 app.use('/mypage', mypageRouter);
 app.use('/toss', tossRouter);
+app.use('/kakao', kakaoRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
@@ -98,97 +88,6 @@ app.get('/dott', async (req, res) => {
     res.status(200).json({ key: value });
   } else {
     res.status(400).json({ message: 'Invalid key' });
-  }
-});
-
-// 카카오로그인
-app.get('/kakaocb', async (req, res) => {
-  try {
-    const { code } = await req.query;
-    const responseToken = await axios.post(
-      'https://kauth.kakao.com/oauth/token',
-      {
-        grant_type: 'authorization_code',
-        client_id: process.env.REST_API_KEY,
-        redirect_uri: process.env.REDIRECT_URI_BACK,
-        code,
-        client_secret: process.env.CLIENT_SECRET_KEY,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-        },
-      },
-    );
-
-    const { access_token } = responseToken.data;
-
-    // access_token으로 카카오회원 정보 가져오기
-    const kakaoUserInfo = await axios.get('https://kapi.kakao.com/v2/user/me', {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-      },
-    });
-
-    const kakaoId = await kakaoUserInfo.data.kakao_account.email;
-    const nickname = await kakaoUserInfo.data.kakao_account.profile.nickname;
-
-    // 몽고DB 아이디 중복여부 체크
-    const duplicatedUser = await User.findOne({ id: kakaoId });
-    const { JWT_ACCESS_SECRET } = process.env;
-    if (duplicatedUser) {
-      const accessToken = jwt.sign(
-        {
-          id: kakaoId,
-        },
-        JWT_ACCESS_SECRET,
-        { expiresIn: '1h' },
-      );
-      const redirectURL = 'http://localhost:3000/login/kakao/callback';
-      const data = { key: accessToken };
-      const query = new URLSearchParams(data).toString();
-      const finalURL = `${redirectURL}?${query}`;
-      res.status(200).redirect(finalURL);
-    } else {
-      const newUser = {
-        id: kakaoId,
-        password: 'none',
-        name: nickname,
-        phone: '',
-        age_Range: kakaoUserInfo.data.kakao_account.age_range,
-        gender: kakaoUserInfo.data.kakao_account.gender,
-        thumbnail_Image: kakaoUserInfo.data.kakao_account.profile.thumbnail_image_url,
-        profile_Image: kakaoUserInfo.data.kakao_account.profile.profile_image_url,
-        addresses: [
-          {
-            destination: nickname,
-            recipient: nickname,
-            address: '',
-            addressDetail: '',
-            zipCode: '',
-            recipientPhone: '',
-            isDefault: true,
-          },
-        ],
-      };
-      await User.create(newUser);
-      const accessToken = jwt.sign(
-        {
-          id: kakaoId,
-        },
-        JWT_ACCESS_SECRET,
-        { expiresIn: '1h' },
-      );
-      const redirectURL = 'http://localhost:3000/login/kakao/callback';
-      const data = { key: accessToken };
-      const query = new URLSearchParams(data).toString();
-      const finalURL = `${redirectURL}?${query}`;
-      res.status(200).redirect(finalURL);
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ message: '로그인 실패' });
   }
 });
 
@@ -213,6 +112,7 @@ app.post('/islogin', (req, res) => {
     }
   });
 });
+// ---------------------------------------------
 
 // ------------------- DB 연결 -------------------
 app.listen(PORT, () => {
