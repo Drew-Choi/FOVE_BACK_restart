@@ -1,18 +1,21 @@
 /* eslint-disable camelcase */
 const express = require('express');
+const session = require('express-session');
 const axios = require('axios');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+// 익스프레스 열기
+const app = express();
+
 // db연결
 require('./mongooseConnect');
 const User = require('./models/user');
 
-const app = express();
-
 const { PORT } = process.env;
 
+// CORS 허용포트 설정
 app.use(
   cors({
     origin: 'http://localhost:3000',
@@ -22,6 +25,15 @@ app.use(
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// 세션설정
+app.use(
+  session({
+    secret: process.env.SESSION_KEY,
+    resave: false,
+    saveUninitialized: true,
+  }),
+);
 
 // ------CSP-----
 // app.use((req, res, next) => {
