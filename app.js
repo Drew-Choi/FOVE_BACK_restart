@@ -5,6 +5,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
 
 // 익스프레스 열기
 const app = express();
@@ -22,16 +23,33 @@ app.use(
   }),
 );
 
+// 특정API세션으로 인한 허용
+app.use('/toss/data', (req, res, next) => {
+  // CORS 설정
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  next();
+});
+
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// 쿠키파서 설정
+app.use(cookieParser());
 // 세션설정
 app.use(
   session({
     secret: process.env.SESSION_KEY,
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      maxAge: 2000,
+      httpOnly: true,
+    },
   }),
 );
 

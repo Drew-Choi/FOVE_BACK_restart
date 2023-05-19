@@ -32,7 +32,6 @@ const tossApprove = async (req, res) => {
       // eslint-disable-next-line no-unused-expressions
       if (response.status === 200) {
         req.session.cashData = await response.data;
-        console.log('앞선', req.session.cashData);
         res.status(200).redirect('http://localhost:3000/store/order_success');
       } else {
         res.status(401).json('인가실패');
@@ -46,27 +45,13 @@ const tossApprove = async (req, res) => {
   }
 };
 
-const paymentData = (req, res) => {
+const paymentData = async (req, res) => {
   try {
-    // eslint-disable-next-line prefer-destructuring
-    const cashData = req.session.cashData;
-    console.log(cashData);
-
-    if (cashData) {
-      console.log('실제로 보내는 캐쉬데이터', cashData);
-      res.status(200).json(cashData);
-    } else {
-      res.status(404).json({ message: '데이터오류' });
-    }
+    if (req.session.cashData) return res.status(200).json(req.session.cashData);
+    return res.status(401).json({ message: '인가실패로 데이터가 없음' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: '알 수 없는 오류' });
   }
 };
-
-// const paymentClear = async (req, res) => {
-//   cashData = null;
-//   res.json({ message: '캐싱된 데이터가 초기화되었습니다.' });
-// };
-
 module.exports = { tossApprove, paymentData };
