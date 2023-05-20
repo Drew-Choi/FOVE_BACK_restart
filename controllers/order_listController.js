@@ -32,4 +32,21 @@ const getMemberOrderList = async (req, res) => {
   }
 };
 
-module.exports = { getMemberOrderList };
+const orderCancelGetItem = async (req, res) => {
+  try {
+    const { orderId, token } = await req.body;
+    // 토큰 받아 인증 받기
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '회원인증실패' });
+
+      // 토큰 인증 성공시
+      const orderInfo = await Order.findOne({ user: decoded.id, 'payments.orderId': orderId });
+      res.status(200).json(orderInfo);
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '알 수 없는 에러' });
+  }
+};
+
+module.exports = { getMemberOrderList, orderCancelGetItem };
