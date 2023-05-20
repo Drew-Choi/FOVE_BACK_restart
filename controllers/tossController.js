@@ -9,6 +9,7 @@ const tossApprove = async (req, res) => {
     const { orderPrice } = req.query;
 
     if (orderPrice === amount) {
+      // 토스 인증을 위한 키
       const { SECRET_KEY } = process.env;
       const encoder = await new TextEncoder();
       // eslint-disable-next-line prefer-template
@@ -54,4 +55,46 @@ const paymentData = async (req, res) => {
     res.status(500).json({ message: '알 수 없는 오류' });
   }
 };
-module.exports = { tossApprove, paymentData };
+
+const tossCancel = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    // 토스 인증을 위한 키
+    const { SECRET_KEY } = process.env;
+    const encoder = await new TextEncoder();
+    // eslint-disable-next-line prefer-template
+    const utf8Array = await encoder.encode(SECRET_KEY + ':');
+    const encode = await btoa(String.fromCharCode.apply(null, utf8Array));
+
+    const orderInfo = await axios.get(`https://api.tosspayments.com/v1/payments/orders/${orderId}`, {
+      headers: {
+        Authorization: `Basic ${encode}`,
+      },
+    });
+
+    if (orderInfo.status === 200) {
+      console.log(orderInfo.data.paymentKey);
+      const key = orderInfo.data.paymentKey;
+      const cancelInfo = await axios.post(
+        `https://api.tosspayments.com/v1/payments/${key}/cancel`,
+        { cancelReason: orderInfo.data.reason },
+        {
+          headers: {
+            Authorization: `Basic ${encode}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      // eslint-disable-next-line no-unused-expressions
+      cancelInfo.status === 200
+        ? res.status(200).json(cancelInfo.data)
+        : res.status(401).json({ message: '결체취소 미인증' });
+    } else {
+      res.status(401).json({ message: '아이디 조회 실패' });
+    }
+  } catch (err) {
+    console.error(err).json({ message: '알 수 없는 오류' });
+  }
+};
+
+module.exports = { tossApprove, paymentData, tossCancel };
