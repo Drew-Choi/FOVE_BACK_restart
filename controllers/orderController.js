@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 const Order = require('../models/order');
 
+const filterUniqueCode = (time) => {
+  const uniqueKey = time.replace(/[-T:]/g, '').replace(/\+.*/, '');
+
+  return uniqueKey;
+};
+
 // const User = require('../models/user');
 // const product = require('../models/product');
 
@@ -38,23 +44,13 @@ const addOrder = async (req, res) => {
     //   return res.status(404).json({ message: 'User not found' });
     // }
     const {
-      // 들어갈 내용 : status,approvedAt,method
-      // 상의할것 : 토탈 금액 알아서? 할인도 그전에 처리되는건지 ?
       payments,
-      // productName,
-      // img,
-      // price,
-      // size,
-      // color,
-      // quantity,
       products,
-      unitSumPrice,
       message,
       isOrdered,
       isShipping,
       isDelivered,
       isReturn,
-      paymentMethod,
       name,
       address,
       phone,
@@ -76,18 +72,7 @@ const addOrder = async (req, res) => {
       if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
 
       // 토큰인증 성공시
-      const order = await Order.findOne();
-      // const product = [
-      //   {
-      //     productName,
-      //     img,
-      //     price,
-      //     size,
-      //     color,
-      //     quantity,
-      //     unitSumPrice,
-      //   },
-      // ];
+      const order = await Order.find({ orderId: payments.orderId });
       const user = decoded.id;
       const recipient = {
         address,
@@ -103,16 +88,28 @@ const addOrder = async (req, res) => {
         phoneCode,
         phoneMidNum,
         phoneLastNum,
+        message,
       };
 
-      const sumPrice = unitSumPrice;
-
-      if (!order) {
+      if (order.length === 0) {
+        // eslint-disable-next-line object-curly-newline
+        const { status, orderId, orderName, approvedAt, discount, cancels, totalAmount, suppliedAmoint, method } =
+          payments;
+        const key = filterUniqueCode(approvedAt);
+        const newPayments = {
+          status,
+          orderId: key + orderId,
+          orderName,
+          approvedAt,
+          discount,
+          cancels,
+          totalAmount,
+          suppliedAmoint,
+          method,
+        };
         const newOrder = new Order({
-          // userId,
-          // user,
           user,
-          payments,
+          payments: newPayments,
           recipient,
           products,
           message,
@@ -120,16 +117,27 @@ const addOrder = async (req, res) => {
           isShipping,
           isDelivered,
           isReturn,
-          // paymentMethod,
-          sumPrice,
         });
         await newOrder.save();
       } else {
+        // eslint-disable-next-line object-curly-newline
+        const { status, orderId, orderName, approvedAt, discount, cancels, totalAmount, suppliedAmoint, method } =
+          payments;
+        const key = filterUniqueCode(approvedAt);
+        const newPayments = {
+          status,
+          orderId: orderId + key,
+          orderName,
+          approvedAt,
+          discount,
+          cancels,
+          totalAmount,
+          suppliedAmoint,
+          method,
+        };
         const newOrder = new Order({
-          // userId,
-          // user,
-          payments,
           user,
+          payments: newPayments,
           recipient,
           products,
           message,
@@ -137,14 +145,12 @@ const addOrder = async (req, res) => {
           isShipping,
           isDelivered,
           isReturn,
-          paymentMethod,
-          sumPrice,
         });
         await newOrder.save();
       }
       // const populatedOrder = await Order.findById(userId).populate('user', 'name');
       // res.status(200).json(populatedOrder);
-      res.status(200).json('주문하기 성공 최두루 아이스크림 사줘');
+      res.status(200).json({ message: '주문성공' });
     });
     // const userId = '12345';
     // const userId = req.user._id;
@@ -154,28 +160,7 @@ const addOrder = async (req, res) => {
   }
 };
 
-const getAllOrder = async (req, res) => {
-  try {
-    const order = await Order.find({});
-    res.status(200).json(order);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('주문 부르기 실패(서버에러)');
-  }
-};
 // 카트에서 여러 상품을 가지고 주문
 module.exports = {
   addOrder,
-  getAllOrder,
 };
-
-// // 모든 주문 조회
-// exports.getAllOrders = async (req, res, next) => {
-//   try {
-//     const orders = await Orders.find().populate('user products.product');
-//     // orders 객체 = 조회한, 찾은 모든 주문 데이터를 JSON 형태로 클라이언트에게 반환하는 코드입니다.
-//     res.status(200).json(orders);
-//   } catch (error) {
-//     next(error);
-//   }
-// };

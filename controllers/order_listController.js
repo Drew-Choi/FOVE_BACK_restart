@@ -4,6 +4,14 @@ const Order = require('../models/order');
 
 const { JWT_ACCESS_SECRET } = process.env;
 
+const changeTimetoNum = (time) => {
+  const utcTime = new Date(time);
+  // 한국 시차 9시간 더하기
+  const koreanTime = utcTime.setHours(utcTime.getHours() + 9);
+
+  return koreanTime;
+};
+
 const getMemberOrderList = async (req, res) => {
   try {
     const { token } = req.body;
@@ -14,7 +22,9 @@ const getMemberOrderList = async (req, res) => {
       // 토큰 인증 성공
       const getAllOrderInfo = await Order.find({ user: decoded.id });
       // 날짜순으로 확실히 정렬 오름차순
-      const array = getAllOrderInfo.sort((a, b) => a.payments.approvedAt - b.payments.approvedAt);
+      const array = getAllOrderInfo.sort(
+        (a, b) => changeTimetoNum(b.payments.approvedAt) - changeTimetoNum(a.payments.approvedAt),
+      );
       res.status(200).json(array);
     });
   } catch (err) {
