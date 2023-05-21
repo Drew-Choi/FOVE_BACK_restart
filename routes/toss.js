@@ -5,6 +5,6 @@ router.get('/approve', tossApprove);
 
 router.get('/data', paymentData);
 
-router.post('/cancle', tossCancel);
+router.post('/cancel', tossCancel);
 
 module.exports = router;
