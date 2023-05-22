@@ -86,7 +86,6 @@ const kakaoCallBack = async (req, res) => {
       };
       await User.create(newUser);
       await Cart.create(newCart);
-      console.log('아이디와 카트 생성완료');
       const accessToken = jwt.sign(
         {
           id: kakaoId,

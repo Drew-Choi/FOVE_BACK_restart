@@ -84,7 +84,6 @@ const getProductDetail = async (req, res) => {
     // if (!product) {
     //   return res.status(404).send('해당 상품이 존재하지 않습니다.');
     // }
-
     res.status(200).json(product); // 상태코드 200과 product를 json 응답
   } catch (err) {
     console.error(err);

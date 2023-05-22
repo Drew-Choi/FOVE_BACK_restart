@@ -37,12 +37,12 @@ const addProductToCart = async (req, res) => {
     const { JWT_ACCESS_SECRET } = process.env;
     // req.boy의 상품 정보들을 구조분해 할당으로 매칭시켜 변수 저장
     const { token } = req.body;
-    const { productName, ProductCode, img, price, size, quantity, unitSumPrice } = req.body;
+    const { productName, productCode, img, price, size, quantity, unitSumPrice } = req.body;
 
     // req.body로 받은 상품 정보들을 product라는 객체 형태의 변수에 저장
     const product = {
       productName,
-      ProductCode,
+      productCode,
       img,
       price,
       size,
@@ -98,7 +98,6 @@ const addProductToCart = async (req, res) => {
       // // 장바구니에 동일한 옵션의 상품이 있을 경우 상품을 추가하지 않고 기존에 들어있는 상품의 quantity에 req.body의 quantity를 더해 증감시키기
       sameProduct.quantity += quantity;
       sameProduct.unitSumPrice = sameProduct.price * sameProduct.quantity;
-
       await userCart.save();
       res.status(200).json({ message: '기존 상품 수량 증가', userCart });
     });
