@@ -76,8 +76,8 @@ const getProductsByCategory = async (req, res) => {
 // 특정 상품 조회하기
 const getProductDetail = async (req, res) => {
   try {
-    const { productId } = req.params; // params로 들어온 productId 값을 구조분해할당으로 매칭시켜 변수 저장
-    const product = await Product.find({ _id: productId });
+    const { productCode } = req.params; // params로 들어온 productId 값을 구조분해할당으로 매칭시켜 변수 저장
+    const product = await Product.find({ productCode });
 
     // 예비 코드
     // const product = await Product.findById(productId); // 상품 DB에서 _id가 productId 인 것 조회해서 product에 담기

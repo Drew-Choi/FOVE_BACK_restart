@@ -22,7 +22,7 @@ router.get('/new', getNewProducts); // 일정 기간 내 등록된 상품 데이
 router.get('/:category', getProductsByCategory); // 카테고리에 따른 상품 데이터 가져오기
 
 // 특정상품 상세페이지 /store/productId/"유저아이디"
-router.get('/productId/:productId', getProductDetail); // 특정 상품 데이터 가져오기
+router.get('/productId/:productCode', getProductDetail); // 특정 상품 데이터 가져오기
 
 // 상품 검색 /store/search
 router.post('/search', searchProduct);

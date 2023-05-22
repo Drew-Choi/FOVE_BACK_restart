@@ -37,11 +37,12 @@ const addProductToCart = async (req, res) => {
     const { JWT_ACCESS_SECRET } = process.env;
     // req.boy의 상품 정보들을 구조분해 할당으로 매칭시켜 변수 저장
     const { token } = req.body;
-    const { productName, img, price, size, quantity, unitSumPrice } = req.body;
+    const { productName, ProductCode, img, price, size, quantity, unitSumPrice } = req.body;
 
     // req.body로 받은 상품 정보들을 product라는 객체 형태의 변수에 저장
     const product = {
       productName,
+      ProductCode,
       img,
       price,
       size,
@@ -112,7 +113,7 @@ const removeCartItem = async (req, res) => {
   try {
     const { JWT_ACCESS_SECRET } = process.env;
     const { token } = req.body;
-    const { productId } = req.params;
+    const { productCode } = req.params;
 
     jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
       if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
@@ -126,7 +127,7 @@ const removeCartItem = async (req, res) => {
 
       const updatedCart = await Cart.findOneAndUpdate(
         { _id: userCart._id },
-        { $pull: { products: { _id: productId } } },
+        { $pull: { products: { productCode } } },
         { new: true }, // 업데이트된 내용 반환을 위해 new: true
       );
       res.status(200).json({ messege: '장바구이에서 해당 상품 삭제 성공', updatedCart });
@@ -171,7 +172,7 @@ const cartProductQtyPlus = async (req, res) => {
   try {
     const { JWT_ACCESS_SECRET } = process.env;
     const { token } = req.body;
-    const { productId } = req.params;
+    const { productCode } = req.params;
 
     jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
       if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
@@ -183,7 +184,7 @@ const cartProductQtyPlus = async (req, res) => {
         return res.status(404).json('장바구니 없음');
       }
 
-      const product = await userCart.products.find((productEl) => productEl._id.toString() === productId);
+      const product = await userCart.products.find((productEl) => productEl.productCode === productCode);
       // productEl 의 _id 속성을 문자열로 변환해야 비교가 됨
 
       if (!product) {
@@ -206,7 +207,7 @@ const cartProductQtyPlus = async (req, res) => {
 const cartProductQtyMinus = async (req, res) => {
   try {
     const { JWT_ACCESS_SECRET } = process.env;
-    const { productId } = req.params;
+    const { productCode } = req.params;
     const { token } = req.body;
 
     jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
@@ -219,7 +220,7 @@ const cartProductQtyMinus = async (req, res) => {
         return res.status(404).json('장바구니 없음');
       }
 
-      const product = await userCart.products.find((productEl) => productEl._id.toString() === productId);
+      const product = await userCart.products.find((productEl) => productEl.productCode === productCode);
       // productEl 의 _id 속성을 문자열로 변환해야 비교가 됨
 
       if (!product) {

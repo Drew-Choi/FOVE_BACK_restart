@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 // db연결
 require('../mongooseConnect');
 const User = require('../models/user');
+const Cart = require('../models/cart');
 
 const kakaoCallBack = async (req, res) => {
   try {
@@ -42,6 +43,7 @@ const kakaoCallBack = async (req, res) => {
     // 몽고DB 아이디 중복여부 체크
     const duplicatedUser = await User.findOne({ id: kakaoId });
     const { JWT_ACCESS_SECRET } = process.env;
+    // 아이디가 있다면,
     if (duplicatedUser) {
       const accessToken = jwt.sign(
         {
@@ -56,6 +58,7 @@ const kakaoCallBack = async (req, res) => {
       const finalURL = `${redirectURL}?${query}`;
       res.status(200).redirect(finalURL);
     } else {
+      // 아이디가 없다면 새로 만들어 DB저장
       const newUser = {
         id: kakaoId,
         password: 'none',
@@ -77,7 +80,13 @@ const kakaoCallBack = async (req, res) => {
           },
         ],
       };
+      const newCart = {
+        user: kakaoId,
+        products: [],
+      };
       await User.create(newUser);
+      await Cart.create(newCart);
+      console.log('아이디와 카트 생성완료');
       const accessToken = jwt.sign(
         {
           id: kakaoId,

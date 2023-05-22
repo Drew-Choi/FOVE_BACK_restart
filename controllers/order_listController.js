@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 require('../mongooseConnect');
 const Order = require('../models/order');
 const Cancle = require('../models/cancel');
+// const Product = require('../models/product');
 
 const { JWT_ACCESS_SECRET } = process.env;
 
@@ -73,5 +74,15 @@ const orderCancelGetItem = async (req, res) => {
     res.status(500).json({ message: '알 수 없는 에러' });
   }
 };
+
+// const orderListSelect = async (req, res) => {
+//   try {
+//     const { productName } = req.params;
+//     const selectProduct = await Product.findOne({ productName });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: '알 수 없는 에러' });
+//   }
+// };
 
 module.exports = { getMemberOrderList, orderCancelGetItem, getCancelList };
