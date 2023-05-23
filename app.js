@@ -33,6 +33,15 @@ app.use('/toss/data', (req, res, next) => {
   next();
 });
 
+app.use('/shipping/search', (req, res, next) => {
+  // CORS 설정
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -64,6 +73,7 @@ const mypageRouter = require('./routes/mypage');
 const order_listRouter = require('./routes/order_list');
 const tossRouter = require('./routes/toss');
 const kakaoRouter = require('./routes/kakao');
+const shippingRouter = require('./routes/shipping');
 // const orderRouter = require('./routes/order');
 
 app.use('/cart', cartRouter);
@@ -77,6 +87,7 @@ app.use('/mypage', mypageRouter);
 app.use('/order_list', order_listRouter);
 app.use('/toss', tossRouter);
 app.use('/kakao', kakaoRouter);
+app.use('/shipping', shippingRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
