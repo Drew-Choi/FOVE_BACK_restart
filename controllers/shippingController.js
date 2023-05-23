@@ -1,9 +1,9 @@
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 const { default: axios } = require('axios');
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
 require('../mongooseConnect');
-const Order = require('../models/order');
+// const Order = require('../models/order');
 
 const searchShipping = async (req, res) => {
   try {
