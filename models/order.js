@@ -54,6 +54,10 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  shippingCode: {
+    // 송장번호
+    type: String,
+  },
   isDelivered: {
     // 배송완료
     type: Boolean,
