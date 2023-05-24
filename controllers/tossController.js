@@ -115,7 +115,7 @@ const tossCancel = async (req, res) => {
         // 토스 취소 승인 성공 후 DB 작업 및 취소데이터 전송
         if (cancelInfo.status === 200) {
           const searchOrder = await Order.findOne({ user: id, 'payments.orderId': orderId });
-          const { user } = searchOrder;
+          const { user, shippingCode } = searchOrder;
           const { orderName, approvedAt, method, discount, totalAmount } = searchOrder.payments;
           const { cancelAmount, cancelReason, transactionKey, canceledAt } = cancelInfo.data.cancels[0];
 
@@ -140,8 +140,10 @@ const tossCancel = async (req, res) => {
             products: searchOrder.products,
             isOrdered: false,
             isShipping: false,
+            shippingCode,
             isDelivered: false,
-            isReturn: true,
+            isCancel: true,
+            isReturn: false,
           };
 
           await Cancel.create(newCancel);

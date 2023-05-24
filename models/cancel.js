@@ -62,7 +62,8 @@ const cancelSchema = new mongoose.Schema({
   },
   shippingCode: {
     // 송장번호
-    type: String,
+    type: Number,
+    default: 0,
   },
   isDelivered: {
     // 배송완료

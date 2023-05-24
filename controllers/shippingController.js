@@ -3,7 +3,7 @@ const { default: axios } = require('axios');
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
 require('../mongooseConnect');
-// const Order = require('../models/order');
+const Order = require('../models/order');
 
 const searchCJ = async (req, res) => {
   try {
@@ -84,9 +84,10 @@ const searchCJ = async (req, res) => {
 
 const searchHANJIN = async (req, res) => {
   try {
-    const shippingCode = 123456789123;
-    // 테스트 송장번호(완료된거)
-    // const shippingCode = 453005591010;
+    const { shippingCode } = req.body;
+    // const shippingCode = 123456789123;
+    // // 테스트 송장번호(완료된거)
+    // // const shippingCode = 453005591010;
     const shippingInfo = await axios.get(
       `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${shippingCode}`,
       {
@@ -108,10 +109,10 @@ const searchHANJIN = async (req, res) => {
         return res.status(200).json(isShippingFalse);
       }
 
-      if (trackingNumber.includes('상품접수')) {
-        const isShippingTrue = { isShipping: true };
-        return res.status(200).json(isShippingTrue);
-      }
+      // if (trackingNumber.includes('상품접수')) {
+      //   const isShippingTrue = { isShipping: true };
+      //   return res.status(200).json(isShippingTrue);
+      // }
 
       if (trackingNumber.includes('배송완료')) {
         const isisDeliveredTrue = { isDelivered: true };

@@ -49,7 +49,9 @@ const addOrder = async (req, res) => {
       message,
       isOrdered,
       isShipping,
+      shippingCode,
       isDelivered,
+      isCancel,
       isReturn,
       name,
       address,
@@ -115,7 +117,9 @@ const addOrder = async (req, res) => {
           message,
           isOrdered,
           isShipping,
+          shippingCode,
           isDelivered,
+          isCancel,
           isReturn,
         });
         await newOrder.save();
@@ -143,7 +147,9 @@ const addOrder = async (req, res) => {
           message,
           isOrdered,
           isShipping,
+          shippingCode,
           isDelivered,
+          isCancel,
           isReturn,
         });
         await newOrder.save();

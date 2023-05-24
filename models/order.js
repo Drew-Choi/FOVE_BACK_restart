@@ -57,6 +57,7 @@ const orderSchema = new mongoose.Schema({
   shippingCode: {
     // 송장번호
     type: Number,
+    default: 0,
   },
   isDelivered: {
     // 배송완료
@@ -66,7 +67,7 @@ const orderSchema = new mongoose.Schema({
   // 주문취소 또는 반품에 의한 결제취소
   isCancel: {
     type: Boolean,
-    default: true,
+    default: false,
   },
   // 반품->교환상태
   isReturn: {
