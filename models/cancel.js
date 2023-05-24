@@ -69,10 +69,15 @@ const cancelSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // 주문 취소 및 반품 등
-  isReturn: {
+  // 주문취소 또는 반품에 의한 결제취소
+  isCancel: {
     type: Boolean,
     default: true,
+  },
+  // 반품->교환상태
+  isReturn: {
+    type: Boolean,
+    default: false,
   },
   paymentMethod: {
     type: String,

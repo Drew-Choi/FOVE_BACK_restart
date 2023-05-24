@@ -47,7 +47,7 @@ const orderSchema = new mongoose.Schema({
   isOrdered: {
     // 주문완료
     type: Boolean,
-    default: false, // 활동 상태 여부(회원/탈퇴)
+    default: true,
   },
   isShipping: {
     // 배송중
@@ -56,13 +56,19 @@ const orderSchema = new mongoose.Schema({
   },
   shippingCode: {
     // 송장번호
-    type: String,
+    type: Number,
   },
   isDelivered: {
     // 배송완료
     type: Boolean,
     default: false,
   },
+  // 주문취소 또는 반품에 의한 결제취소
+  isCancel: {
+    type: Boolean,
+    default: true,
+  },
+  // 반품->교환상태
   isReturn: {
     type: Boolean,
     default: false,
