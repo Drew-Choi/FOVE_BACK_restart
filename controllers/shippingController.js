@@ -1,9 +1,19 @@
-// const jwt = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 const { default: axios } = require('axios');
 const cheerio = require('cheerio');
 const iconv = require('iconv-lite');
 require('../mongooseConnect');
 const Order = require('../models/order');
+
+const changeTimetoNum = (time) => {
+  const utcTime = new Date(time);
+  // 한국 시차 9시간 더하기
+  const koreanTime = utcTime.setHours(utcTime.getHours() + 9);
+
+  return koreanTime;
+};
+
+const { JWT_ACCESS_SECRET } = process.env;
 
 const searchCJ = async (req, res) => {
   try {
@@ -84,43 +94,59 @@ const searchCJ = async (req, res) => {
 
 const searchHANJIN = async (req, res) => {
   try {
-    const { shippingCode } = req.body;
-    // const shippingCode = 123456789123;
-    // // 테스트 송장번호(완료된거)
-    // // const shippingCode = 453005591010;
-    const shippingInfo = await axios.get(
-      `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${shippingCode}`,
-      {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-        },
-      },
-    );
+    const { token } = req.body;
 
-    if (shippingInfo.status === 200) {
-      const $ = cheerio.load(shippingInfo.data);
-      // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
-      const trackingNumber = $('p[class="comm-sec"]').text().trim();
-      console.log(trackingNumber);
+    // 토큰 검증부터 시작
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰인증실패' });
 
-      if (trackingNumber.includes('운송장이 등록되지 않았거나')) {
-        const isShippingFalse = { isShipping: false };
-        console.log(trackingNumber);
-        return res.status(200).json(isShippingFalse);
+      // 토큰 인증 성공
+      // 일단 모든 주문내역 중 payment.status: "DONE"이고, isShipping: true이고, isDelivered: false인 것만 모으기
+      const getOrderedListArr = await Order.find({
+        user: decoded.id,
+        isShipping: true,
+        isDelivered: false,
+        'payments.status': 'DONE',
+      });
+
+      console.log(getOrderedListArr);
+
+      if (!getOrderedListArr) {
+        res.status(404).json({ message: '주문데이터를 db에서 찾을 수 없음' });
+      } else {
+        await getOrderedListArr.map(async (el) => {
+          const shippingInfo = await axios.get(
+            // eslint-disable-next-line max-len
+            `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${el.shippingCode}`,
+            {
+              headers: {
+                'Content-Type': 'text/html; charset=utf-8',
+              },
+            },
+          );
+          if (shippingInfo.status === 200) {
+            const $ = cheerio.load(shippingInfo.data);
+            // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
+            const trackingNumber = $('p[class="comm-sec"]').text().trim();
+            // trackingNumber.includes('배송완료')가 false 이면 바로 종료
+            if (!trackingNumber.includes('배송완료')) return console.log('안돼!!!!!!!');
+
+            // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
+            console.log('여기로 하나 진행되야함');
+            await Order.findOneAndUpdate(
+              { user: decoded.id, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+              { isShipping: false, isDelivered: true },
+            );
+          }
+        });
+        const getAllOrderInfo = await Order.find({ user: decoded.id });
+        // 날짜순으로 확실히 정렬 내림차순
+        const array = getAllOrderInfo.sort(
+          (a, b) => changeTimetoNum(b.payments.approvedAt) - changeTimetoNum(a.payments.approvedAt),
+        );
+        res.status(200).json(array);
       }
-
-      // if (trackingNumber.includes('상품접수')) {
-      //   const isShippingTrue = { isShipping: true };
-      //   return res.status(200).json(isShippingTrue);
-      // }
-
-      if (trackingNumber.includes('배송완료')) {
-        const isisDeliveredTrue = { isDelivered: true };
-        return res.status(200).json(isisDeliveredTrue);
-      }
-    } else {
-      res.status(400).json({ message: '데이터 전송 실패' });
-    }
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: '알 수 없는 오류' });

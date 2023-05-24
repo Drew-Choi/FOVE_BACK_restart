@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { getMemberOrderList, orderCancelGetItem, getCancelList } = require('../controllers/order_listController');
 
 // 모든 주문내역서 가져오기 + 토큰으로 아이디 추출
+// 동기적처리를 위해 shipping/hanjin과 통합
 router.post('/getMemberOrderList', getMemberOrderList);
 
 // 모든 취내역서 가오기 + 토큰으로 아이디 추출
