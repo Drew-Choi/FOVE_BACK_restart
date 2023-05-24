@@ -1,6 +1,8 @@
 const router = require('express').Router();
-const { searchShipping } = require('../controllers/shippingController');
+const { searchCJ, searchHANJIN } = require('../controllers/shippingController');
 
-router.get('/search', searchShipping);
+router.get('/search/cj', searchCJ);
+
+router.get('/search/hanjin', searchHANJIN);
 
 module.exports = router;
