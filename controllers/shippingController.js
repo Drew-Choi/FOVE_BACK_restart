@@ -84,7 +84,9 @@ const searchCJ = async (req, res) => {
 
 const searchHANJIN = async (req, res) => {
   try {
-    const shippingCode = 12312312312;
+    const shippingCode = 123456789123;
+    // 테스트 송장번호(완료된거)
+    // const shippingCode = 453005591010;
     const shippingInfo = await axios.get(
       `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${shippingCode}`,
       {
@@ -96,38 +98,24 @@ const searchHANJIN = async (req, res) => {
 
     if (shippingInfo.status === 200) {
       const $ = cheerio.load(shippingInfo.data);
-      // 운송장 번호 확인
+      // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
       const trackingNumber = $('p[class="comm-sec"]').text().trim();
       console.log(trackingNumber);
-      // // 중요 테이블 선택자
-      // const table = $('table[bordercolor="#8C8C8C"]');
-      // // 배송추적상태 확인하기----
-      // // 구체적인 추적 정보 데이터 담는 곳
-      // const coreInfoArr = [];
-      // // 추적정보 열 찾기
-      // const coreInfo = table.find(
-      //   // eslint-disable-next-line max-len
-      //   'tr:not([class]):not([id]):not([style]):not([colspan]):not([bgcolor]):not([border]):not([bordercolor]):not([bordercolordark]):not([cellpadding]):not([cellspacing])[height="22"]',
-      // );
-      // // 테이블에서 추적 정보 td추출
-      // coreInfo.find('td').each((index, el) => {
-      //   const core = $(el).text().trim();
-      //   coreInfoArr.push(core);
-      // });
-      // // -----------------------
-      // // 집화처리 체크
-      // const arrCheck = (arr) => {
-      //   const findData = arr.find((data) => data === '집화처리');
-      //   const result = findData === '집화처리';
-      //   return result;
-      // };
+
       if (trackingNumber.includes('운송장이 등록되지 않았거나')) {
         const isShippingFalse = { isShipping: false };
         console.log(trackingNumber);
-        res.status(200).json(isShippingFalse);
-      } else if (!trackingNumber.includes('운송장이 등록되지 않았거나')) {
+        return res.status(200).json(isShippingFalse);
+      }
+
+      if (trackingNumber.includes('상품접수')) {
         const isShippingTrue = { isShipping: true };
-        res.status(200).json(isShippingTrue);
+        return res.status(200).json(isShippingTrue);
+      }
+
+      if (trackingNumber.includes('배송완료')) {
+        const isisDeliveredTrue = { isDelivered: true };
+        return res.status(200).json(isisDeliveredTrue);
       }
     } else {
       res.status(400).json({ message: '데이터 전송 실패' });
