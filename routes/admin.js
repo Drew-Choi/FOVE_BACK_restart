@@ -2,10 +2,17 @@ const router = require('express').Router();
 const multer = require('multer');
 const fs = require('fs');
 
-const { createProduct, getAllProducts, deleteProduct, modifyProduct } = require('../controllers/productController');
+const {
+  createProduct,
+  getAllProducts,
+  deleteProduct,
+  modifyProduct,
+  getReturnList,
+} = require('../controllers/productController');
 const { getAllOrder } = require('../controllers/orderController');
 
 // ------------------- multer, 이미지 저장 관련 -------------------
+// 상품등록 multer
 const dir = './uploads';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -15,6 +22,7 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
+
 // distStorage를 사용하여 multer 스토리지 엔진을 생성
 // destination 함수는 세가지 매개변수를 사용함(req: Http요청, file: 업로드 된 파일 객체, cb: 콜백함수)
 // cb에 업로드 된 파일의 대상 폴더 저장
@@ -23,15 +31,36 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 // 앞서 정의한 storage 엔진을 사용하는 multer 미들웨어 함수 upload를 생성(업로드 처리 담당)
-
 if (!fs.existsSync(dir)) fs.mkdirSync(dir); // dir 디렉토리 존재하는지 확인하고 없으면 생성
 // -----------------------------------------------------------------
+
+// 반품리스트 사진 multer
+const returnStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const { orderId } = req.body;
+    const returnDir = `./uploads/${orderId}`;
+
+    if (!fs.existsSync(returnDir)) {
+      fs.mkdirSync(returnDir);
+    }
+
+    cb(null, returnDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+
+const returnMulter = multer({ storage: returnStorage });
 
 // 관리자 상품등록 페이지 /admin/register-product
 router.post('/register-product', upload.array('img'), createProduct);
 // upload.array('img') : multer 패키지를 사용하여 파일 업로드를 처리하는 미들웨어
 // array 함수에 파일 배열이 img라는 이름으로 업로드될 것이라고 지정
 // 여기서 업로드 된 파일은 createProduct 기능의 req.files 배열에서 사용 가능
+
+// 반품신청 리스트를 얻기
+router.post('/return_list', returnMulter.array('img'), getReturnList);
 
 // 상품리스트 페이지 /admin/productlist
 router.get('/productlist', getAllProducts); // 전체 상품 데이터 가져오기

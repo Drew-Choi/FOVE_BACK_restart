@@ -180,6 +180,10 @@ const searchProduct = async (req, res) => {
 // 전체 주문 리스트 불러오기
 // const getOrderList = {};
 
+const getReturnList = async (req, res) => {
+  res.send(console.log('zz'));
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -189,4 +193,5 @@ module.exports = {
   deleteProduct,
   modifyProduct,
   searchProduct,
+  getReturnList,
 };
