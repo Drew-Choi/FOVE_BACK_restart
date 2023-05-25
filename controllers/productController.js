@@ -1,5 +1,21 @@
+/* eslint-disable object-curly-newline */
+const jwt = require('jsonwebtoken');
 require('../mongooseConnect');
 const Product = require('../models/product');
+const Order = require('../models/order');
+
+// UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
+const nowDayTime = () => {
+  const utcTimeNow = Date.now();
+  // 9시간 더하기
+  const kstTimeStamp = utcTimeNow + 9 * 60 * 60 * 1000;
+  // 9시간 더한 밀리세컨드를 Date로 생성
+  const kstData = new Date(kstTimeStamp);
+
+  return kstData;
+};
+
+const { JWT_ACCESS_SECRET } = process.env;
 
 // 상품 등록
 const createProduct = async (req, res) => {
@@ -181,7 +197,51 @@ const searchProduct = async (req, res) => {
 // const getOrderList = {};
 
 const getReturnList = async (req, res) => {
-  res.send(console.log('zz'));
+  try {
+    // post로 프론트엔드에서 들어오는 데이터 구조분해할당
+    const { token, orderId, message, reason } = JSON.parse(req.body.data);
+    const id = req.body.orderId;
+
+    // post로 프론트엔드에서 들어오는 이미지 file들의 이름 저장 (배열)
+    const returnImg = req.files.map((el) => el.originalname);
+
+    // 토큰으로 아이디 검증
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 인증 오류' });
+
+      // 토큰 인증 성공
+      // 해당 주문내역서 검증
+      const orderInfo = await Order.findOne({ user: decoded.id, 'payments.orderId': orderId });
+
+      // 해당 주문내역가 있으면 아래 작업 진행
+      if (orderInfo) {
+        // 주문내역서에 새롭게 추가될 내용 정리
+
+        // 해당 주문내역서 데이터 업데이트 및 반품신청서 제출 사항 추가
+        const updateOrderInfo = await Order.findOneAndUpdate(
+          { user: decoded.id, 'payments.orderId': orderId },
+          {
+            isReturnSubmit: true,
+            submitReturn: {
+              submitAt: nowDayTime(),
+              reason,
+              return_message: message,
+              return_img: returnImg,
+            },
+          },
+          { new: true },
+        );
+
+        console.log('성공');
+        res.status(200).json(updateOrderInfo);
+      } else {
+        res.status(400).json({ message: '주문내역서가 없음, 주분번호체크 요망' });
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '알 수 없는 오류' });
+  }
 };
 
 module.exports = {

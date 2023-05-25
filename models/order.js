@@ -69,10 +69,17 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // 반품->교환상태
+  // 반품-교환상태
   isReturn: {
     type: Boolean,
     default: false,
+  },
+  isReturnSubmit: { type: Boolean, default: false },
+  submitReturn: {
+    submitAt: { type: Date },
+    reason: { type: String },
+    return_message: { type: String },
+    return_img: [{ type: String }],
   },
   paymentMethod: {
     type: String,
