@@ -2,6 +2,17 @@ const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
 
+// UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
+const nowDayTime = () => {
+  const utcTimeNow = Date.now();
+  // 9시간 더하기
+  const kstTimeStamp = utcTimeNow + 9 * 60 * 60 * 1000;
+  // 9시간 더한 밀리세컨드를 Date로 생성
+  const kstData = new Date(kstTimeStamp);
+
+  return kstData;
+};
+
 const userSchema = new Schema(
   {
     id: { type: String, required: true, unique: true }, // 아이디. 이메일 형식
@@ -24,12 +35,10 @@ const userSchema = new Schema(
       },
     ],
     points: { type: Number, default: 0 }, // 포인트
-    createAt: { type: Date, default: Date.now }, // 가입일
+    createAt: { type: Date, default: nowDayTime() }, // 가입일
     isActive: { type: Boolean, default: true }, // 활동 상태 여부(회원/탈퇴)
     isAdmin: { type: Boolean, default: false }, // 관리자 여부
-    cartId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // 장바구니 코드
-    accessToken: { type: String, require: true },
-    refreshToken: { type: String, require: true },
+    // cartId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // 장바구니 코드
   },
   {
     collection: 'user', // 컬렉션 이름 설정

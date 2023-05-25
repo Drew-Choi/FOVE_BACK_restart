@@ -116,8 +116,8 @@ app.post('/islogin', (req, res) => {
       res.status(200).json({
         nickName: duplicatedUser.name,
         points: duplicatedUser.points,
-        isAdmin: false,
-        isLogin: true,
+        isAdmin: duplicatedUser.isAdmin,
+        isLogin: duplicatedUser.isActive,
         message: '토큰 검증 완료',
       });
     } else {
