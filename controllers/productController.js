@@ -1,5 +1,6 @@
 /* eslint-disable object-curly-newline */
 const jwt = require('jsonwebtoken');
+
 require('../mongooseConnect');
 const Product = require('../models/product');
 const Order = require('../models/order');
@@ -200,7 +201,6 @@ const getReturnList = async (req, res) => {
   try {
     // post로 프론트엔드에서 들어오는 데이터 구조분해할당
     const { token, orderId, message, reason } = JSON.parse(req.body.data);
-    const id = req.body.orderId;
 
     // post로 프론트엔드에서 들어오는 이미지 file들의 이름 저장 (배열)
     const returnImg = req.files.map((el) => el.originalname);

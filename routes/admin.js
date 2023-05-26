@@ -2,6 +2,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const fs = require('fs');
 
+// UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
 const nowDayTime = () => {
   const utcTimeNow = Date.now();
   // 9시간 더하기
@@ -28,6 +29,7 @@ const { getAllOrder } = require('../controllers/orderController');
 // cb에 업로드 된 파일의 대상 폴더 저장
 // filename 함수도 동일한 세개의 매개변수 하용
 // originalname속성을 사용해 파일의 원본 이름을 저장
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const dir = './uploads';
@@ -45,25 +47,27 @@ const upload = multer({ storage });
 
 // -----------------------------------------------------------------
 
+// multer
 // 반품리스트 사진 multer
-const returnStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const id = req.body.orderId;
-    console.log(id);
-    const returnDir = `./uploads/${id}`;
+const returnStorage = multer({
+  storage: multer.diskStorage({
+    destination: (request, file, cb) => {
+      if (file.fieldname === 'img_return') {
+        console.log(file);
+        const returnDir = `./uploads/${nowDayTime()}`;
 
-    if (!fs.existsSync(returnDir)) {
-      fs.mkdirSync(returnDir, { recursive: true });
-    }
-
-    cb(null, returnDir);
-  },
-  filename: (req, file, cb) => {
-    const filename = `${file.originalname}`;
-    cb(null, filename);
-  },
+        if (!fs.existsSync(returnDir)) {
+          fs.mkdirSync(returnDir, { recursive: true });
+        }
+        cb(null, returnDir);
+      }
+    },
+    filename: (request, file, cb) => {
+      const filename = file.originalname;
+      cb(null, filename);
+    },
+  }),
 });
-const returnMulter = multer({ storage: returnStorage });
 
 // 관리자 상품등록 페이지 /admin/register-product
 router.post('/register-product', upload.array('img'), createProduct);
@@ -72,7 +76,7 @@ router.post('/register-product', upload.array('img'), createProduct);
 // 여기서 업로드 된 파일은 createProduct 기능의 req.files 배열에서 사용 가능
 
 // 반품신청 리스트를 얻기
-router.post('/return_list', returnMulter.array('img_return'), getReturnList);
+router.post('/return_list', returnStorage.array('img_return'), getReturnList);
 
 // 상품리스트 페이지 /admin/productlist
 router.get('/productlist', getAllProducts); // 전체 상품 데이터 가져오기
