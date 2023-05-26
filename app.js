@@ -44,7 +44,7 @@ app.use('/shipping/search', (req, res, next) => {
 });
 
 // bodyparser 를 위한 코드 2줄
-app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // 쿠키파서 설정

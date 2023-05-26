@@ -53,15 +53,13 @@ const returnStorage = multer.diskStorage({
     const returnDir = `./uploads/${id}`;
 
     if (!fs.existsSync(returnDir)) {
-      fs.mkdirSync(returnDir);
+      fs.mkdirSync(returnDir, { recursive: true });
     }
 
     cb(null, returnDir);
   },
   filename: (req, file, cb) => {
-    const id = req.body.orderId;
-    console.log(id);
-    const filename = `${id}_${file.originalname}`;
+    const filename = `${file.originalname}`;
     cb(null, filename);
   },
 });
