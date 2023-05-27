@@ -221,6 +221,8 @@ const getReturnList = async (req, res) => {
         const updateOrderInfo = await Order.findOneAndUpdate(
           { user: decoded.id, 'payments.orderId': orderId },
           {
+            isDelivered: true,
+            isShipping: false,
             isReturnSubmit: true,
             submitReturn: {
               submitAt: nowDayTime(),
@@ -231,8 +233,6 @@ const getReturnList = async (req, res) => {
           },
           { new: true },
         );
-
-        console.log('성공');
         res.status(200).json(updateOrderInfo);
       } else {
         res.status(400).json({ message: '주문내역서가 없음, 주분번호체크 요망' });
