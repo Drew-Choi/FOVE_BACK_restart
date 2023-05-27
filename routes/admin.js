@@ -2,17 +2,6 @@ const router = require('express').Router();
 const multer = require('multer');
 const fs = require('fs');
 
-// UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
-const nowDayTime = () => {
-  const utcTimeNow = Date.now();
-  // 9시간 더하기
-  const kstTimeStamp = utcTimeNow + 9 * 60 * 60 * 1000;
-  // 9시간 더한 밀리세컨드를 Date로 생성
-  const kstData = new Date(kstTimeStamp);
-
-  return kstData;
-};
-
 const {
   createProduct,
   getAllProducts,
@@ -53,8 +42,9 @@ const returnStorage = multer({
   storage: multer.diskStorage({
     destination: (request, file, cb) => {
       if (file.fieldname === 'img_return') {
-        console.log(file);
-        const returnDir = `./uploads/${nowDayTime()}`;
+        const folderName = file.originalname.split('.').shift();
+        const folderNameFinal = folderName.substring(0, folderName.length - 2);
+        const returnDir = `./uploads/${folderNameFinal}`;
 
         if (!fs.existsSync(returnDir)) {
           fs.mkdirSync(returnDir, { recursive: true });
