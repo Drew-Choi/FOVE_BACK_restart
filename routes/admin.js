@@ -7,10 +7,10 @@ const {
   getAllProducts,
   deleteProduct,
   modifyProduct,
-  getReturnList,
+  submitReturnList,
   uniqueNumberGenerate,
 } = require('../controllers/productController');
-const { getAllOrder } = require('../controllers/orderController');
+// const { getAllOrder } = require('../controllers/orderController');
 
 // ------------------- multer, 이미지 저장 관련 -------------------
 // 상품등록 multer
@@ -70,7 +70,7 @@ router.post('/register-product', upload.array('img'), createProduct);
 router.get('/register-product/uniqueCheck', uniqueNumberGenerate);
 
 // 반품신청 리스트를 얻기
-router.post('/return_list', returnStorage.array('img_return'), getReturnList);
+router.post('/return_submit', returnStorage.array('img_return'), submitReturnList);
 
 // 상품리스트 페이지 /admin/productlist
 router.get('/productlist', getAllProducts); // 전체 상품 데이터 가져오기

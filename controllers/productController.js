@@ -21,25 +21,34 @@ const { JWT_ACCESS_SECRET } = process.env;
 // 상품 등록
 const createProduct = async (req, res) => {
   try {
-    const { productCode, productName, price, category, size, detail } = JSON.parse(req.body.data);
+    const { productCode, productName, price, category, size, detail, createAt } = JSON.parse(req.body.data);
     // req.body의 data 필드를 JSON으로 구문 분석하고 결과 객체를 분해하여 변수명과 일치하는 key 값의 값들을 각 변수들에 저장
     // 프론트에서 data라는 이름으로 JSON 형태로 보내기 때문에 req.body.data로 받아서 JSON.parse() 함수를 이용해 객체형태로 parsing
 
     const img = req.files.map((el) => el.originalname);
     // // req.files 배열의 요소들을 각 파일의 원본명으로 매핑하여 'img' 라는 이름의 새 배열에 저장
 
+    const finder = await Product.find({ productName });
+
+    if (finder.length !== 0)
+      // 상품 중복시
+      return res.status(400).json('해당 상품명이 존재합니다.');
+
+    // 중복값이 없다면,
     const newProduct = new Product({
       productCode,
       productName,
       price,
-      size,
       category,
-      detail,
+      size,
       img,
+      detail,
+      createAt,
     });
 
     await newProduct.save();
     res.status(200).json('상품 등록 성공!');
+    return;
   } catch (err) {
     console.error(err);
     res.status(500).json('상품 등록 셀패(서버 에러)');
@@ -193,10 +202,8 @@ const searchProduct = async (req, res) => {
   }
 };
 
-// 전체 주문 리스트 불러오기
-// const getOrderList = {};
-
-const getReturnList = async (req, res) => {
+// 반품 신청서 저장
+const submitReturnList = async (req, res) => {
   try {
     // post로 프론트엔드에서 들어오는 데이터 구조분해할당
     const { token, orderId, message, reason } = JSON.parse(req.body.data);
@@ -298,6 +305,6 @@ module.exports = {
   deleteProduct,
   modifyProduct,
   searchProduct,
-  getReturnList,
+  submitReturnList,
   uniqueNumberGenerate,
 };
