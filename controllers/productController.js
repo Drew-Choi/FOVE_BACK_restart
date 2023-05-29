@@ -81,7 +81,6 @@ const getProductsByCategory = async (req, res) => {
       // params로 들어온 category가 위 categories 배열에 없을 때
       return res.status(400).send('유효하지 않은 카테고리 입니다.');
     }
-    console.log(category.toUpperCase());
     const products = await Product.find({ category: category.toUpperCase() }); // DB에서 해당 category 의 상품들만 조회해서 products 배열에 담기
     res.status(200).json(products); // 상태코드 200과 products 배열을 json 응답
   } catch (err) {
