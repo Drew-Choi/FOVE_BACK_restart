@@ -8,6 +8,7 @@ const {
   deleteProduct,
   modifyProduct,
   getReturnList,
+  uniqueNumberGenerate,
 } = require('../controllers/productController');
 const { getAllOrder } = require('../controllers/orderController');
 
@@ -64,6 +65,9 @@ router.post('/register-product', upload.array('img'), createProduct);
 // upload.array('img') : multer 패키지를 사용하여 파일 업로드를 처리하는 미들웨어
 // array 함수에 파일 배열이 img라는 이름으로 업로드될 것이라고 지정
 // 여기서 업로드 된 파일은 createProduct 기능의 req.files 배열에서 사용 가능
+
+// 상품 고유 코드 생성기 (중복체크 해줌)
+router.get('/register-product/uniqueCheck', uniqueNumberGenerate);
 
 // 반품신청 리스트를 얻기
 router.post('/return_list', returnStorage.array('img_return'), getReturnList);

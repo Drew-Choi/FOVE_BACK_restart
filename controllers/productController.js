@@ -243,6 +243,52 @@ const getReturnList = async (req, res) => {
   }
 };
 
+// 상품 고유번호 생성하여 DB중복여부 확인 후 프론트로 보내주는 미들웨어
+const uniqueNumberGenerate = async (req, res) => {
+  try {
+    // 유니크 상품 코드 생성
+    const generateUniqueNum = (youWantLength) => {
+      const base = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let randomId = '';
+
+      for (let i = 0; i < youWantLength; i += 1) {
+        const randomIndex = Math.floor(Math.random() * base.length);
+        randomId += base[randomIndex];
+      }
+      return randomId;
+    };
+
+    // 유니코드 체크
+    const uniqueCheckING = async () => {
+      let uniqueNumber = '';
+
+      while (true) {
+        // eslint-disable-next-line no-await-in-loop
+        uniqueNumber = generateUniqueNum(5);
+        // eslint-disable-next-line no-await-in-loop
+        const finder = await Product.find({ productCode: uniqueNumber });
+
+        if (finder.length === 0) {
+          break;
+        }
+      }
+      return uniqueNumber;
+    };
+
+    // 유니코드 체크한거 담기
+    const checkCompleteNumber = await uniqueCheckING();
+
+    if (checkCompleteNumber && checkCompleteNumber.length === 5) {
+      res.status(200).json({ uniqueNumber: checkCompleteNumber });
+    } else {
+      res.status(500).json({ message: '알 수 없는 오류. 고유코드 생성실패' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '알 수 없는 오류' });
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -253,4 +299,5 @@ module.exports = {
   modifyProduct,
   searchProduct,
   getReturnList,
+  uniqueNumberGenerate,
 };
