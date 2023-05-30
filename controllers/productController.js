@@ -120,14 +120,12 @@ const getProductDetail = async (req, res) => {
 const modifyProduct = async (req, res) => {
   try {
     const { productId } = req.params;
-    const { productCode, productName, price, category, size, detail } = JSON.parse(req.body.data);
+    const { productName, price, size, detail } = JSON.parse(req.body.data);
     // const img = req.files.map((el) => el.originalname);
 
     const product = {
-      productCode,
       productName,
       price,
-      category,
       size: {
         OS: size.OS || 0,
         S: size.S || 0,
@@ -136,13 +134,14 @@ const modifyProduct = async (req, res) => {
       },
       // img,
       detail,
+      createAt: nowDayTime(),
     };
 
-    await Product.findByIdAndUpdate(productId, product, { new: true });
-    res.status(200).json('상품 수정 성공!');
+    await Product.findOneAndUpdate({ productCode: productId }, { $set: product }, { new: true });
+    res.status(200).json({ message: '상품 수정 성공!' });
   } catch (err) {
     console.error(err);
-    res.status(500).send('상품 수정 실패(서버 에러)');
+    res.status(500).json({ message: '상품 수정 실패(서버 에러)' });
   }
 };
 
