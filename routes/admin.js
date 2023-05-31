@@ -29,7 +29,15 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    const { originalname } = file;
+    const destinationPath = './uploads';
+
+    // 경로에 같은 파일 명이 있을 경우 덮어쓰기
+    if (fs.existsSync(destinationPath + originalname)) {
+      cb(null, file.originalname);
+    } else {
+      cb(null, file.originalname);
+    }
   },
 });
 // 앞서 정의한 storage 엔진을 사용하는 multer 미들웨어 함수 upload를 생성(업로드 처리 담당)

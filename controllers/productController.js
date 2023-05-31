@@ -121,7 +121,27 @@ const modifyProduct = async (req, res) => {
   try {
     const { productId } = req.params;
     const { productName, price, size, detail } = JSON.parse(req.body.data);
-    // const img = req.files.map((el) => el.originalname);
+    const img = req.files.map((el) => el.originalname);
+    console.log('원본이미지', img);
+
+    const imgFileNameSplit = (arr) => {
+      // eslint-disable-next-line prefer-const
+      let indexArr = [];
+      for (let i = 0; i < arr.length; i += 1) {
+        const split1 = arr[i].split('_').pop();
+        const split2 = split1.split('.').shift();
+        indexArr.push(Number(split2));
+      }
+      return indexArr;
+    };
+
+    const imgIndex = imgFileNameSplit(img);
+    console.log('스플릿트', imgIndex);
+
+    const arange = (data, num) => {
+      const imgFields = num.map((el, index) => ({ [`img.${el - 1}`]: data[index] }));
+      return Object.assign({}, ...imgFields);
+    };
 
     const product = {
       productName,
@@ -132,10 +152,12 @@ const modifyProduct = async (req, res) => {
         M: size.M || 0,
         L: size.L || 0,
       },
-      // img,
+      ...arange(img, imgIndex),
       detail,
       createAt: nowDayTime(),
     };
+
+    console.log(product);
 
     await Product.findOneAndUpdate({ productCode: productId }, { $set: product }, { new: true });
     res.status(200).json({ message: '상품 수정 성공!' });
