@@ -1,5 +1,6 @@
 /* eslint-disable object-curly-newline */
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 require('../mongooseConnect');
 const Product = require('../models/product');
@@ -169,7 +170,9 @@ const deleteProduct = async (req, res) => {
   try {
     const { productId } = req.params;
 
-    const deletedProduct = await Product.findByIdAndDelete(productId);
+    const deletedProduct = await Product.findOneAndDelete({ productCode: productId });
+
+    console.log(deletedProduct);
 
     if (!deletedProduct) {
       return res.status(404).json('해당 상품이 존재하지 않습니다.');
@@ -178,6 +181,32 @@ const deleteProduct = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('조회 실패(서버 에러)');
+  }
+};
+
+// 개별이미지 삭제
+const deleteImgProduct = async (req, res) => {
+  try {
+    const { productCode, imgURL } = req.body;
+
+    const deleteImg = await Product.findOneAndUpdate({ productCode }, { $pull: { img: imgURL } }, { new: true });
+
+    if (deleteImg) {
+      // 이미지 원본 삭제
+      const imgPath = `./uploads/${imgURL}`;
+      fs.unlink(imgPath, (err) => {
+        if (err) {
+          console.error(err);
+          res.status(500).json('내부 오류');
+        }
+      });
+
+      return res.status(200).json('이미지 삭제완료');
+    }
+    return res.status(400).json('해당 이미지를 찾을 수 없습니다.');
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json('알 수 없는 오류');
   }
 };
 
@@ -325,4 +354,5 @@ module.exports = {
   searchProduct,
   submitReturnList,
   uniqueNumberGenerate,
+  deleteImgProduct,
 };

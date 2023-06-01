@@ -9,6 +9,7 @@ const {
   modifyProduct,
   submitReturnList,
   uniqueNumberGenerate,
+  deleteImgProduct,
 } = require('../controllers/productController');
 // const { getAllOrder } = require('../controllers/orderController');
 
@@ -89,6 +90,7 @@ router.post('/productlist/modify/:productId', upload.array('img'), modifyProduct
 // 상품리스트 페이지에서 상품 삭제
 router.post('/productlist/delete/:productId', deleteProduct);
 
+router.post('/productlist/imgDelete', deleteImgProduct);
 // 전체 주문 리스트 /admin/orderlist
 // router.get('/orderlist', getOrderList);
 
