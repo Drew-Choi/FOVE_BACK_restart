@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const ProductSchema = new mongoose.Schema({
   productCode: { type: String, unique: true, required: true }, // 상품관리코드
   productName: { type: String, unique: true, required: true }, // 상품명
-  price: { type: Number, required: true }, // 가격
   category: { type: String, required: true }, // 카테고리
+  price: { type: Number, required: true }, // 가격
   size: {
     OS: { type: Number, default: 0 },
     S: { type: Number, default: 0 },

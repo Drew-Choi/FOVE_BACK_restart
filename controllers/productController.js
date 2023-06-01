@@ -120,7 +120,7 @@ const getProductDetail = async (req, res) => {
 const modifyProduct = async (req, res) => {
   try {
     const { productId } = req.params;
-    const { productName, price, size, detail } = JSON.parse(req.body.data);
+    const { productName, price, size, detail, category } = JSON.parse(req.body.data);
     const img = req.files.map((el) => el.originalname);
 
     const imgFileNameSplit = (arr) => {
@@ -143,6 +143,7 @@ const modifyProduct = async (req, res) => {
 
     const product = {
       productName,
+      category,
       price,
       size: {
         OS: size.OS || 0,
