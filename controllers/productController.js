@@ -177,6 +177,15 @@ const deleteProduct = async (req, res) => {
     if (!deletedProduct) {
       return res.status(404).json('해당 상품이 존재하지 않습니다.');
     }
+    for (let i = 0; i < deletedProduct.img.length; i += 1) {
+      const imgPath = `./uploads/${deletedProduct.img[i]}`;
+      fs.unlink(imgPath, (err) => {
+        if (err) {
+          console.error(err);
+          res.status(500).json('내부오류');
+        }
+      });
+    }
     res.status(200).json('상품 삭제 완료');
   } catch (err) {
     console.error(err);
