@@ -158,6 +158,7 @@ const modifyProduct = async (req, res) => {
     };
 
     await Product.findOneAndUpdate({ productCode: productId }, { $set: product }, { new: true });
+
     res.status(200).json({ message: '상품 수정 성공!' });
   } catch (err) {
     console.error(err);
