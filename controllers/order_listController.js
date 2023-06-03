@@ -129,14 +129,44 @@ const orderCancelGetItem = async (req, res) => {
   }
 };
 
-// const orderListSelect = async (req, res) => {
-//   try {
-//     const { productName } = req.params;
-//     const selectProduct = await Product.findOne({ productName });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: '알 수 없는 에러' });
-//   }
-// };
+const getAdminOrderList = async (req, res) => {
+  try {
+    const orderListInfo = await Order.find({});
 
-module.exports = { getMemberOrderList, orderCancelGetItem, getCancelList };
+    if (!orderListInfo) return res.status(500).json('데이터 오류');
+    // oderListInfo에 모든 정보가 잘 들어오면,
+    // 날짜순으로 확실히 정렬 내림차순
+    const array = orderListInfo.sort(
+      (a, b) => changeTimetoNum(b.payments.approvedAt) - changeTimetoNum(a.payments.approvedAt),
+    );
+    res.status(200).json(array);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
+const getAdminCancelList = async (req, res) => {
+  try {
+    const cancelListInfo = await Cancle.find({});
+
+    if (!cancelListInfo) return res.status(500).json('데이터 오류');
+    // oderListInfo에 모든 정보가 잘 들어오면,
+    // 날짜순으로 확실히 정렬 내림차순
+    const array = cancelListInfo.sort(
+      (a, b) => changeTimetoNum(b.cancels.canceledAt) - changeTimetoNum(a.cancels.canceledAt),
+    );
+    res.status(200).json(array);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
+module.exports = {
+  getMemberOrderList,
+  orderCancelGetItem,
+  getCancelList,
+  getAdminOrderList,
+  getAdminCancelList,
+};

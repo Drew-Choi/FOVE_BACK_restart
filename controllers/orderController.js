@@ -137,21 +137,7 @@ const addOrder = async (req, res) => {
   }
 };
 
-const getOrderList = async (req, res) => {
-  try {
-    const orderListInfo = await Order.find({});
-
-    if (!orderListInfo) return res.status(500).json('데이터 오류');
-    // oderListInfo에 모든 정보가 잘 들어오면,
-    res.status(200).json(orderListInfo);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json('알 수 없는 오류');
-  }
-};
-
 // 카트에서 여러 상품을 가지고 주문
 module.exports = {
   addOrder,
-  getOrderList,
 };
