@@ -1,36 +1,12 @@
 const jwt = require('jsonwebtoken');
 const Order = require('../models/order');
+const { default: axios } = require('axios');
 
 const filterUniqueCode = (time) => {
   const uniqueKey = time.replace(/[-T:]/g, '').replace(/\+.*/, '');
 
   return uniqueKey;
 };
-
-// const User = require('../models/user');
-// const product = require('../models/product');
-
-// const sendOrder = async (req, res) => {
-//   try {
-//     const { productName, img, price, size, color, quantity, unitSumPrice } = req.body;
-//     const productInfo = {
-//       productName,
-//       img,
-//       price,
-//       size,
-//       color,
-//       quantity,
-//       unitSumPrice,
-//     };
-//     res.send({ productInfo });
-//   } catch (error) {
-//     console.error(error);
-//     res.sendStatus(500);
-//   }
-//   // try {
-//   //   const { productName, img, price, size, color, quantity, unitSumPrice } = req.body;
-//   // } catch (err) {}
-// };
 
 // 한개의 상품을 바로 주문할경우
 const addOrder = async (req, res) => {
@@ -154,19 +130,29 @@ const addOrder = async (req, res) => {
         });
         await newOrder.save();
       }
-      // const populatedOrder = await Order.findById(userId).populate('user', 'name');
-      // res.status(200).json(populatedOrder);
       res.status(200).json({ message: '주문성공' });
     });
-    // const userId = '12345';
-    // const userId = req.user._id;
   } catch (err) {
     console.error(err);
     res.status(500).json('주문하기 실패');
   }
 };
 
+const getOrderList = async (req, res) => {
+  try {
+    const orderListInfo = await Order.find({});
+
+    if (!orderListInfo) return res.status(500).json('데이터 오류');
+    // oderListInfo에 모든 정보가 잘 들어오면,
+    res.status(200).json(orderListInfo);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 // 카트에서 여러 상품을 가지고 주문
 module.exports = {
   addOrder,
+  getOrderList,
 };

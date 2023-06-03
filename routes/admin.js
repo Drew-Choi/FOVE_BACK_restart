@@ -2,6 +2,7 @@ const router = require('express').Router();
 const multer = require('multer');
 const fs = require('fs');
 
+// productControll - 물건 관련
 const {
   createProduct,
   getAllProducts,
@@ -11,6 +12,9 @@ const {
   uniqueNumberGenerate,
   deleteImgProduct,
 } = require('../controllers/productController');
+
+// orderControll - 클라이언트 주문관련
+const { getOrderList } = require('../controllers/orderController');
 // const { getAllOrder } = require('../controllers/orderController');
 
 // ------------------- multer, 이미지 저장 관련 -------------------
@@ -90,22 +94,10 @@ router.post('/productlist/modify/:productId', upload.array('img'), modifyProduct
 // 상품리스트 페이지에서 상품 삭제
 router.post('/productlist/delete/:productId', deleteProduct);
 
+// 수정시 이미지 개별삭제
 router.post('/productlist/imgDelete', deleteImgProduct);
-// 전체 주문 리스트 /admin/orderlist
-// router.get('/orderlist', getOrderList);
 
-// ------------------- 예비 코드 -------------------
-// router.post(
-//   '/register-product',
-//   upload.fields([
-//     { name: 'imgMain', maxCount: 1 },
-//     { name: 'imgSub1', maxCount: 1 },
-//     { name: 'imgSub2', maxCount: 1 },
-//     { name: 'imgSub3', maxCount: 1 },
-//     { name: 'imgSub4', maxCount: 1 },
-//     { name: 'imgSub5', maxCount: 1 },
-//   ]),
-//   createProduct,
-// );
+// 전체 주문 리스트 /admin/orderlist
+router.get('/orderlist', getOrderList);
 
 module.exports = router;
