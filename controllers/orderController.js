@@ -1,6 +1,5 @@
 const jwt = require('jsonwebtoken');
 const Order = require('../models/order');
-const { default: axios } = require('axios');
 
 const filterUniqueCode = (time) => {
   const uniqueKey = time.replace(/[-T:]/g, '').replace(/\+.*/, '');
