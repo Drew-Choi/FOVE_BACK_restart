@@ -193,7 +193,7 @@ const tossCancelAdmin = async (req, res) => {
       const key = orderInfo.data.paymentKey;
       const cancelInfo = await axios.post(
         `https://api.tosspayments.com/v1/payments/${key}/cancel`,
-        { cancelReason: '환불신청: 관리자 권한으로 결제취소' },
+        { cancelReason: '환불신청_관리자 권한으로 결제취소' },
         {
           headers: {
             Authorization: `Basic ${encode}`,

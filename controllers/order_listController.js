@@ -38,7 +38,7 @@ const individualCheck = async (arr, decodedId) => {
       // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
       await Order.findOneAndUpdate(
         { user: decodedId, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
-        { isShipping: false, isDelivered: true },
+        { $set: { isShipping: false, isDelivered: true } },
       );
       return null;
     }
@@ -67,7 +67,7 @@ const individualCheckAdmin = async (arr) => {
       // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
       await Order.findOneAndUpdate(
         { 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
-        { isShipping: false, isDelivered: true },
+        { $set: { isShipping: false, isDelivered: true } },
       );
       return null;
     }
@@ -230,6 +230,54 @@ const getAdminOrderListDetail = async (req, res) => {
   }
 };
 
+// Admin 입금 전 주문내역 강제취소
+const adminOrderDelete = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    // 찾아서 삭제하기
+    const result = await Order.findOneAndDelete({ 'payments.orderId': orderId });
+
+    if (!result) return res.status(400).json('삭제실패, 일치하는 orderId가 없음');
+    // 만약 result가 있다면,
+    return res.status(200).json('삭제완료');
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json('알 수 없는 오류');
+  }
+};
+
+// Admin 반품신청 후 교환 진행 시
+const adminOrderReturn = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const result = await Order.findOneAndUpdate(
+      { 'payments.orderId': orderId },
+      // eslint-disable-next-line object-curly-newline
+      {
+        $set: {
+          isDelivered: false,
+          isShipping: false,
+          isCancel: false,
+          isReturnSubmit: false,
+          isReturn: true,
+          shippingCode: 0,
+        },
+      },
+      { new: true },
+    );
+
+    if (!result) return res.status(400).json('주문번호 찾지 못함, 교환신청 실패');
+    // result가 true이면,
+    console.log('성공');
+    res.status(200).json('반품신청 성공');
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 module.exports = {
   getMemberOrderList,
   orderCancelGetItem,
@@ -237,4 +285,6 @@ module.exports = {
   getAdminOrderList,
   getAdminCancelList,
   getAdminOrderListDetail,
+  adminOrderDelete,
+  adminOrderReturn,
 };

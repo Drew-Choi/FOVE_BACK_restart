@@ -284,14 +284,16 @@ const submitReturnList = async (req, res) => {
         const updateOrderInfo = await Order.findOneAndUpdate(
           { user: decoded.id, 'payments.orderId': orderId },
           {
-            isDelivered: true,
-            isShipping: false,
-            isReturnSubmit: true,
-            submitReturn: {
-              submitAt: nowDayTime(),
-              reason,
-              return_message: message,
-              return_img: returnImg,
+            $set: {
+              isDelivered: true,
+              isShipping: false,
+              isReturnSubmit: true,
+              submitReturn: {
+                submitAt: nowDayTime(),
+                reason,
+                return_message: message,
+                return_img: returnImg,
+              },
             },
           },
           { new: true },
@@ -338,14 +340,16 @@ const cancelSubmitReturn = async (req, res) => {
         const updateOrderInfo = await Order.findOneAndUpdate(
           { user: decoded.id, 'payments.orderId': orderId },
           {
-            isDelivered: true,
-            isShipping: false,
-            isReturnSubmit: false,
-            submitReturn: {
-              submitAt: '',
-              reason: '',
-              return_message: '',
-              return_img: '',
+            $set: {
+              isDelivered: true,
+              isShipping: false,
+              isReturnSubmit: false,
+              submitReturn: {
+                submitAt: '',
+                reason: '',
+                return_message: '',
+                return_img: '',
+              },
             },
           },
           { new: true },
@@ -385,14 +389,16 @@ const cancelSubmitReturnAdmin = async (req, res) => {
       const updateOrderInfo = await Order.findOneAndUpdate(
         { 'payments.orderId': orderId },
         {
-          isDelivered: true,
-          isShipping: false,
-          isReturnSubmit: false,
-          submitReturn: {
-            submitAt: '',
-            reason: '',
-            return_message: '',
-            return_img: '',
+          $set: {
+            isDelivered: true,
+            isShipping: false,
+            isReturnSubmit: false,
+            submitReturn: {
+              submitAt: '',
+              reason: '',
+              return_message: '',
+              return_img: '',
+            },
           },
         },
         { new: true },

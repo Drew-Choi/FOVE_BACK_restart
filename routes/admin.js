@@ -20,6 +20,8 @@ const {
   getAdminOrderList,
   getAdminCancelList,
   getAdminOrderListDetail,
+  adminOrderDelete,
+  adminOrderReturn,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin } = require('../controllers/tossController');
@@ -122,5 +124,11 @@ router.get('/orderlist/detail/:orderId', getAdminOrderListDetail);
 
 // 어드민에서 결제 취소하기 /admin/orderlist/detail/cancel
 router.post('/orderlist/detail/cancel', tossCancelAdmin);
+
+// 입금 전 주문강제취소 /admin/orderlist/detail/order_delete/:orderId
+router.get('/orderlist/detail/order_delete/:orderId', adminOrderDelete);
+
+// 반품신청 후 교환 진행 시 /admin/orderlist/detail/order_return/:orderId
+router.get('/orderlist/detail/order_return/:orderId', adminOrderReturn);
 
 module.exports = router;
