@@ -307,6 +307,106 @@ const submitReturnList = async (req, res) => {
   }
 };
 
+// 반품신청 철회_클라이언트
+const cancelSubmitReturn = async (req, res) => {
+  try {
+    // post로 프론트엔드에서 들어오는 데이터 구조분해할당
+    const { token, orderId } = req.body;
+
+    // 토큰으로 아이디 검증
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '토큰 인증 오류' });
+
+      // 토큰 인증 성공
+      // 해당 주문내역서 검증
+      const orderInfo = await Order.findOne({ user: decoded.id, 'payments.orderId': orderId });
+
+      // 해당 주문내역가 있으면 아래 작업 진행
+      if (orderInfo) {
+        // 해당 신청 이미지 지우기
+
+        const imgPath = `./uploads/${orderId}`;
+        fs.rm(imgPath, { recursive: true }, (error) => {
+          if (error) {
+            console.error(error);
+            res.status(500).json('내부오류');
+          }
+        });
+
+        // 주문내역서에 새롭게 추가될 내용 정리
+        // 해당 주문내역서 데이터 업데이트 및 반품신청서 캔슬로 수정
+        const updateOrderInfo = await Order.findOneAndUpdate(
+          { user: decoded.id, 'payments.orderId': orderId },
+          {
+            isDelivered: true,
+            isShipping: false,
+            isReturnSubmit: false,
+            submitReturn: {
+              submitAt: '',
+              reason: '',
+              return_message: '',
+              return_img: '',
+            },
+          },
+          { new: true },
+        );
+        res.status(200).json(updateOrderInfo);
+      } else {
+        res.status(400).json({ message: '주문내역서가 없음, 주분번호체크 요망' });
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '알 수 없는 오류' });
+  }
+};
+
+// 반품신청 철회_어드민
+const cancelSubmitReturnAdmin = async (req, res) => {
+  try {
+    // post로 프론트엔드에서 들어오는 데이터 구조분해할당
+    const { orderId } = req.body;
+
+    // 해당 주문내역서 검증
+    const orderInfo = await Order.findOne({ 'payments.orderId': orderId });
+
+    // 해당 주문내역가 있으면 아래 작업 진행
+    if (orderInfo) {
+      // 해당 신청 이미지 지우기
+      const imgPath = `./uploads/${orderId}`;
+      fs.rm(imgPath, { recursive: true }, (error) => {
+        if (error) {
+          console.error(error);
+          res.status(500).json('내부오류');
+        }
+      });
+      // 주문내역서에 새롭게 추가될 내용 정리
+      // 해당 주문내역서 데이터 업데이트 및 반품신청서 캔슬로 수정
+      const updateOrderInfo = await Order.findOneAndUpdate(
+        { 'payments.orderId': orderId },
+        {
+          isDelivered: true,
+          isShipping: false,
+          isReturnSubmit: false,
+          submitReturn: {
+            submitAt: '',
+            reason: '',
+            return_message: '',
+            return_img: '',
+          },
+        },
+        { new: true },
+      );
+      res.status(200).json(updateOrderInfo);
+    } else {
+      res.status(400).json({ message: '주문내역서가 없음, 주분번호체크 요망' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: '알 수 없는 오류' });
+  }
+};
+
 // 상품 고유번호 생성하여 DB중복여부 확인 후 프론트로 보내주는 미들웨어
 const uniqueNumberGenerate = async (req, res) => {
   try {
@@ -366,4 +466,6 @@ module.exports = {
   submitReturnList,
   uniqueNumberGenerate,
   deleteImgProduct,
+  cancelSubmitReturn,
+  cancelSubmitReturnAdmin,
 };

@@ -11,6 +11,8 @@ const {
   submitReturnList,
   uniqueNumberGenerate,
   deleteImgProduct,
+  cancelSubmitReturn,
+  cancelSubmitReturnAdmin,
 } = require('../controllers/productController');
 
 // orderControll - 클라이언트 주문관련
@@ -91,6 +93,12 @@ router.get('/register-product/uniqueCheck', uniqueNumberGenerate);
 // 반품신청 리스트를 얻기
 router.post('/return_submit', returnStorage.array('img_return'), submitReturnList);
 
+// 반품신청 철회_Client
+router.post('/return_submit/submit_cancel', cancelSubmitReturn);
+
+// 반품신청 철회_Admin
+router.post('/orderlist/detail/cancel_return_submit', cancelSubmitReturnAdmin);
+
 // 상품리스트 페이지 /admin/productlist
 router.get('/productlist', getAllProducts); // 전체 상품 데이터 가져오기
 
@@ -112,6 +120,7 @@ router.get('/cancel_list', getAdminCancelList);
 // 어드민 전체 주문리스트에서 디테일영역으로 /admin/orderlist/detail/:orderId
 router.get('/orderlist/detail/:orderId', getAdminOrderListDetail);
 
+// 어드민에서 결제 취소하기 /admin/orderlist/detail/cancel
 router.post('/orderlist/detail/cancel', tossCancelAdmin);
 
 module.exports = router;
