@@ -14,7 +14,13 @@ const {
 } = require('../controllers/productController');
 
 // orderControll - 클라이언트 주문관련
-const { getAdminOrderList, getAdminCancelList } = require('../controllers/order_listController');
+const {
+  getAdminOrderList,
+  getAdminCancelList,
+  getAdminOrderListDetail,
+} = require('../controllers/order_listController');
+
+const { tossCancelAdmin } = require('../controllers/tossController');
 // const { getAllOrder } = require('../controllers/orderController');
 
 // ------------------- multer, 이미지 저장 관련 -------------------
@@ -102,5 +108,10 @@ router.get('/orderlist', getAdminOrderList);
 
 // 전체 취소 리스트 /admin/cancel_list
 router.get('/cancel_list', getAdminCancelList);
+
+// 어드민 전체 주문리스트에서 디테일영역으로 /admin/orderlist/detail/:orderId
+router.get('/orderlist/detail/:orderId', getAdminOrderListDetail);
+
+router.post('/orderlist/detail/cancel', tossCancelAdmin);
 
 module.exports = router;

@@ -162,4 +162,95 @@ const tossCancel = async (req, res) => {
   }
 };
 
-module.exports = { tossApprove, paymentData, tossCancel };
+// Admin에서 관리자가 강제 결제취소
+const tossCancelAdmin = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    // 오리지널 orderId 추출
+    let originalOrderId = '';
+    // 기존 orderId(노멀)
+    if (orderId.charAt(0) + orderId.charAt(1) === '20') {
+      originalOrderId = orderId.slice(-7);
+    } else {
+      // 중복 아이디 발생시 앞에서 7자리 자르기 (극히 드문 예외상황)
+      originalOrderId = orderId.slice(7);
+    }
+
+    // 토스 인증을 위한 키
+    const { SECRET_KEY } = process.env;
+    const encoder = await new TextEncoder();
+    // eslint-disable-next-line prefer-template
+    const utf8Array = await encoder.encode(SECRET_KEY + ':');
+    const encode = await btoa(String.fromCharCode.apply(null, utf8Array));
+
+    const orderInfo = await axios.get(`https://api.tosspayments.com/v1/payments/orders/${originalOrderId}`, {
+      headers: {
+        Authorization: `Basic ${encode}`,
+      },
+    });
+
+    if (orderInfo.status === 200) {
+      const key = orderInfo.data.paymentKey;
+      const cancelInfo = await axios.post(
+        `https://api.tosspayments.com/v1/payments/${key}/cancel`,
+        { cancelReason: '환불신청: 관리자 권한으로 결제취소' },
+        {
+          headers: {
+            Authorization: `Basic ${encode}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      // 토스 취소 승인 성공 후 DB 작업 및 취소데이터 전송
+      if (cancelInfo.status === 200) {
+        const searchOrder = await Order.findOne({ 'payments.orderId': orderId });
+        const { user, shippingCode, submitReturn } = searchOrder;
+        const { orderName, approvedAt, method, discount, totalAmount } = searchOrder.payments;
+        const { cancelAmount, cancelReason, transactionKey, canceledAt } = cancelInfo.data.cancels[0];
+
+        const newCancel = {
+          user,
+          cancels: {
+            cancelAmount,
+            canceledAt,
+            cancelReason,
+            transactionKey,
+          },
+          payments: {
+            orderId,
+            orderName,
+            status: 'CANCELED',
+            approvedAt,
+            method,
+            discount,
+            totalAmount,
+          },
+          recipient: searchOrder.recipient,
+          products: searchOrder.products,
+          isOrdered: false,
+          isShipping: false,
+          shippingCode,
+          isDelivered: false,
+          isCancel: true,
+          isReturn: false,
+          isReturnSubmit: false,
+          submitReturn,
+        };
+
+        await Cancel.create(newCancel);
+        await Order.deleteOne({ 'payments.orderId': orderId });
+
+        res.status(200).json(cancelInfo.data);
+      } else {
+        res.status(401).json({ message: '결체취소 미인증' });
+      }
+    } else {
+      res.status(401).json({ message: '아이디 조회 실패' });
+    }
+  } catch (err) {
+    console.error(err).json({ message: '알 수 없는 오류' });
+  }
+};
+
+module.exports = { tossApprove, paymentData, tossCancel, tossCancelAdmin };
