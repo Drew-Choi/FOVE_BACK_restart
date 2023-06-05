@@ -173,8 +173,6 @@ const deleteProduct = async (req, res) => {
 
     const deletedProduct = await Product.findOneAndDelete({ productCode: productId });
 
-    console.log(deletedProduct);
-
     if (!deletedProduct) {
       return res.status(404).json('해당 상품이 존재하지 않습니다.');
     }

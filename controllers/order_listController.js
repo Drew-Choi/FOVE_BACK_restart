@@ -158,6 +158,27 @@ const orderCancelGetItem = async (req, res) => {
   }
 };
 
+// client 입금 전 주문내역 강제취소
+const clientOrderDelete = async (req, res) => {
+  try {
+    const { orderId, token } = req.body;
+
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(401).json({ message: '회원인증실패' });
+
+      // 토큰 인증 완료되면,
+      // 찾아서 삭제하기
+      const result = await Order.findOneAndDelete({ user: decoded.id, 'payments.orderId': orderId });
+      if (!result) return res.status(400).json('삭제실패, 일치하는 orderId가 없음');
+      // 만약 result가 있다면,
+      return res.status(200).json('삭제완료');
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json('알 수 없는 오류');
+  }
+};
+
 // ---- Admin 미들웨어
 
 const getAdminOrderList = async (req, res) => {
@@ -298,7 +319,6 @@ const adminadminOrderReturnCanel = async (req, res) => {
 
     if (!result) return res.status(400).json('주문번호 찾지 못함, 교환철회 실패');
     // result가 true이면,
-    console.log('성공');
     res.status(200).json('반품신청 철회 성공');
     return;
   } catch (err) {
@@ -317,4 +337,5 @@ module.exports = {
   adminOrderDelete,
   adminOrderReturn,
   adminadminOrderReturnCanel,
+  clientOrderDelete,
 };
