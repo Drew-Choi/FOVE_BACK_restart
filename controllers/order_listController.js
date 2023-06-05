@@ -261,7 +261,6 @@ const adminOrderReturn = async (req, res) => {
           isCancel: false,
           isReturnSubmit: false,
           isReturn: true,
-          shippingCode: 0,
         },
       },
       { new: true },
@@ -269,8 +268,38 @@ const adminOrderReturn = async (req, res) => {
 
     if (!result) return res.status(400).json('주문번호 찾지 못함, 교환신청 실패');
     // result가 true이면,
-    console.log('성공');
     res.status(200).json('반품신청 성공');
+    return;
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
+// 교환신청 철회시 관리자만 가능
+const adminadminOrderReturnCanel = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    const result = await Order.findOneAndUpdate(
+      { 'payments.orderId': orderId },
+      // eslint-disable-next-line object-curly-newline
+      {
+        $set: {
+          isDelivered: true,
+          isShipping: false,
+          isCancel: false,
+          isReturnSubmit: false,
+          isReturn: false,
+        },
+      },
+      { new: true },
+    );
+
+    if (!result) return res.status(400).json('주문번호 찾지 못함, 교환철회 실패');
+    // result가 true이면,
+    console.log('성공');
+    res.status(200).json('반품신청 철회 성공');
     return;
   } catch (err) {
     console.error(err);
@@ -287,4 +316,5 @@ module.exports = {
   getAdminOrderListDetail,
   adminOrderDelete,
   adminOrderReturn,
+  adminadminOrderReturnCanel,
 };

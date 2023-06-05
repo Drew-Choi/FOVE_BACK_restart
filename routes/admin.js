@@ -22,9 +22,10 @@ const {
   getAdminOrderListDetail,
   adminOrderDelete,
   adminOrderReturn,
+  adminadminOrderReturnCanel,
 } = require('../controllers/order_listController');
 
-const { tossCancelAdmin } = require('../controllers/tossController');
+const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
 // const { getAllOrder } = require('../controllers/orderController');
 
 // ------------------- multer, 이미지 저장 관련 -------------------
@@ -125,10 +126,16 @@ router.get('/orderlist/detail/:orderId', getAdminOrderListDetail);
 // 어드민에서 결제 취소하기 /admin/orderlist/detail/cancel
 router.post('/orderlist/detail/cancel', tossCancelAdmin);
 
+// 어드민에서 결제 취소- 환불용(반환받을 상품이 있어 따로 분리)
+router.post('/orderlist/detail/cancelRefund', tossCancelAdminRefund);
+
 // 입금 전 주문강제취소 /admin/orderlist/detail/order_delete/:orderId
 router.get('/orderlist/detail/order_delete/:orderId', adminOrderDelete);
 
 // 반품신청 후 교환 진행 시 /admin/orderlist/detail/order_return/:orderId
 router.get('/orderlist/detail/order_return/:orderId', adminOrderReturn);
+
+// 교환 철회 버튼(관리자만 가능) /admin/orderlist/detail/order_return/cancel/:orderId
+router.get('/orderlist/detail/order_return/cancel/:orderId', adminadminOrderReturnCanel);
 
 module.exports = router;
