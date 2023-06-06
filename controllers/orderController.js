@@ -10,58 +10,37 @@ const filterUniqueCode = (time) => {
 // 한개의 상품을 바로 주문할경우
 const addOrder = async (req, res) => {
   try {
-    // const userId = '643540aa32e0fd94fa801757';
-
-    // // useId 찾는 코드 나중에 넣기!!
-    // // 사용자 정보 조회
-    // const user = await User.findById(userId);
-    // if (!user) {
-    //   return res.status(404).json({ message: 'User not found' });
-    // }
     const {
-      payments,
+      token,
       products,
       message,
-      isOrdered,
-      isShipping,
-      shippingCode,
-      isDelivered,
-      isCancel,
-      isReturn,
-      name,
-      address,
-      phone,
-      email,
       recipientName,
       recipientZipcode,
       recipientAddress,
       recipientAddressDetail,
-      telAreaCode,
-      telMidNum,
-      telLastNum,
       phoneCode,
       phoneMidNum,
       phoneLastNum,
+      payments,
     } = req.body;
 
+    // eslint-disable-next-line object-curly-newline
+    const { status, orderId, orderName, approvedAt, discount, totalAmount, method } = payments;
+    const key = filterUniqueCode(approvedAt);
+    const newOrderId = key + orderId;
+
     const { JWT_ACCESS_SECRET } = process.env;
-    jwt.verify(name, JWT_ACCESS_SECRET, async (err, decoded) => {
+    jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
       if (err) return res.status(401).json({ message: '토큰 오류 및 토큰 기한 만료' });
 
       // 토큰인증 성공시
-      const order = await Order.find({ orderId: payments.orderId });
+      const order = await Order.find({ 'payments.orderId': newOrderId });
       const user = decoded.id;
       const recipient = {
-        address,
-        phone,
-        email,
         recipientName,
         recipientZipcode,
         recipientAddress,
         recipientAddressDetail,
-        telAreaCode,
-        telMidNum,
-        telLastNum,
         phoneCode,
         phoneMidNum,
         phoneLastNum,
@@ -69,19 +48,13 @@ const addOrder = async (req, res) => {
       };
 
       if (order.length === 0) {
-        // eslint-disable-next-line object-curly-newline
-        const { status, orderId, orderName, approvedAt, discount, cancels, totalAmount, suppliedAmoint, method } =
-          payments;
-        const key = filterUniqueCode(approvedAt);
         const newPayments = {
           status,
-          orderId: key + orderId,
+          orderId: newOrderId,
           orderName,
           approvedAt,
           discount,
-          cancels,
           totalAmount,
-          suppliedAmoint,
           method,
         };
         const newOrder = new Order({
@@ -89,29 +62,16 @@ const addOrder = async (req, res) => {
           payments: newPayments,
           recipient,
           products,
-          message,
-          isOrdered,
-          isShipping,
-          shippingCode,
-          isDelivered,
-          isCancel,
-          isReturn,
         });
         await newOrder.save();
       } else {
-        // eslint-disable-next-line object-curly-newline
-        const { status, orderId, orderName, approvedAt, discount, cancels, totalAmount, suppliedAmoint, method } =
-          payments;
-        const key = filterUniqueCode(approvedAt);
         const newPayments = {
           status,
           orderId: orderId + key,
           orderName,
           approvedAt,
           discount,
-          cancels,
           totalAmount,
-          suppliedAmoint,
           method,
         };
         const newOrder = new Order({
@@ -119,13 +79,6 @@ const addOrder = async (req, res) => {
           payments: newPayments,
           recipient,
           products,
-          message,
-          isOrdered,
-          isShipping,
-          shippingCode,
-          isDelivered,
-          isCancel,
-          isReturn,
         });
         await newOrder.save();
       }

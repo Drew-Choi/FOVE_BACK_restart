@@ -63,6 +63,7 @@ const paymentData = async (req, res) => {
   }
 };
 
+// 배송 전 취소임
 const tossCancel = async (req, res) => {
   try {
     const { orderId } = req.body;
@@ -93,6 +94,7 @@ const tossCancel = async (req, res) => {
       const utf8Array = await encoder.encode(SECRET_KEY + ':');
       const encode = await btoa(String.fromCharCode.apply(null, utf8Array));
 
+      // orderId를 통해 paymentKey 받기
       const orderInfo = await axios.get(`https://api.tosspayments.com/v1/payments/orders/${originalOrderId}`, {
         headers: {
           Authorization: `Basic ${encode}`,
@@ -100,7 +102,9 @@ const tossCancel = async (req, res) => {
       });
 
       if (orderInfo.status === 200) {
+        // 페이먼츠키가 성공적으로 들어온다면,
         const key = orderInfo.data.paymentKey;
+        // 토스페이먼츠에 결제취소 요청하고, 취소 데이터 받기
         const cancelInfo = await axios.post(
           `https://api.tosspayments.com/v1/payments/${key}/cancel`,
           { cancelReason: reason },
@@ -115,12 +119,11 @@ const tossCancel = async (req, res) => {
         // 토스 취소 승인 성공 후 DB 작업 및 취소데이터 전송
         if (cancelInfo.status === 200) {
           const searchOrder = await Order.findOne({ user: id, 'payments.orderId': orderId });
-          const { user, shippingCode } = searchOrder;
-          const { orderName, approvedAt, method, discount, totalAmount } = searchOrder.payments;
+          const { shippingCode, payments, recipient, products } = searchOrder;
           const { cancelAmount, cancelReason, transactionKey, canceledAt } = cancelInfo.data.cancels[0];
 
           const newCancel = {
-            user,
+            user: id,
             cancels: {
               cancelAmount,
               canceledAt,
@@ -128,22 +131,18 @@ const tossCancel = async (req, res) => {
               transactionKey,
             },
             payments: {
-              orderId,
-              orderName,
+              orderId: payments.orderId,
+              orderName: payments.orderName,
               status: 'CANCELED',
-              approvedAt,
-              method,
-              discount,
-              totalAmount,
+              approvedAt: payments.approvedAt,
+              method: payments.method,
+              discount: payments.discount,
+              totalAmount: payments.totalAmount,
             },
-            recipient: searchOrder.recipient,
-            products: searchOrder.products,
-            isOrdered: false,
-            isShipping: false,
+            recipient,
+            products,
             shippingCode,
-            isDelivered: false,
             isCancel: true,
-            isReturn: false,
           };
 
           await Cancel.create(newCancel);
@@ -154,7 +153,7 @@ const tossCancel = async (req, res) => {
           res.status(401).json({ message: '결체취소 미인증' });
         }
       } else {
-        res.status(401).json({ message: '아이디 조회 실패' });
+        res.status(401).json({ message: '주문내역 조회 실패' });
       }
     });
   } catch (err) {

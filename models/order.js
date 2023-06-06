@@ -3,17 +3,16 @@ const mongoose = require('mongoose');
 // const { Schema } = mongoose;
 
 const orderSchema = new mongoose.Schema({
-  // user: { type: mongoose.Types.ObjectId, ref: 'User' }, // User 모델의 ObjectId를 참조
   payments: {
-    orderId: { type: String, require: true },
-    orderName: { type: String, require: true },
-    status: { type: String, require: true },
-    approvedAt: { type: String, require: true },
-    method: { type: String, require: true },
-    discount: { type: Number },
+    orderId: { type: String, unique: true },
+    orderName: { type: String },
+    status: { type: String },
+    approvedAt: { type: String },
+    method: { type: String },
+    discount: { type: Number, default: 0 },
     totalAmount: { type: Number },
   },
-  user: { type: String, require: true },
+  user: { type: String },
   recipient: {
     recipientName: { type: String },
     recipientZipcode: { type: String },
@@ -25,7 +24,7 @@ const orderSchema = new mongoose.Schema({
     phoneCode: { type: String },
     phoneMidNum: { type: String },
     phoneLastNum: { type: String },
-    message: { type: String },
+    message: { type: String, default: '' },
   },
   products: [
     {
@@ -39,11 +38,6 @@ const orderSchema = new mongoose.Schema({
       unitSumPrice: { type: Number },
     },
   ],
-  // status: {
-  //   type: String,
-  //   enum: ['ordered', 'shipping', 'delivered'],
-  //   default: 'ordered',
-  // },
   isOrdered: {
     // 주문완료
     type: Boolean,
@@ -74,88 +68,27 @@ const orderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  isReturnSubmit: { type: Boolean, default: false },
-  submitReturn: {
-    submitAt: { type: Date },
-    reason: { type: String },
-    return_message: { type: String },
-    return_img: [{ type: String }],
+  isRetrieved: {
+    type: Boolean,
+    default: false,
   },
+  isRefund: {
+    type: Boolean,
+    default: false,
+  },
+  isReturnSubmit: { type: Boolean, default: false },
+  submitReturn: [
+    {
+      submitAt: { type: Date },
+      reason: { type: String },
+      return_message: { type: String },
+      return_img: [{ type: String }],
+    },
+  ],
   paymentMethod: {
     type: String,
   },
   sumPrice: { type: Number },
-  // paymentMethod: {
-  //   type: String,
-  //   enum: ['nobankbook', 'deposit', 'creditcard'],
-  //   default: 'nobankbook',
-  // },
-  // cartTotalPrice: { type: Number },
-
-  // userId: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: 'User',
-  // },
-  // name: {
-  //   type: String,
-  // },
-  // address: {
-  //   type: String,
-  // },
-
-  // phoneNumber: {
-  //   type: String,
-  // },
-  // points: {
-  //   type: Number,
-  //   default: 0,
-  // },
-  // totalPrice: {
-  //   type: Number,
-  //   default: 0,
-  // },
-  // isPaid: {
-  //   type: Boolean,
-  //   default: false,
-  // },
-  // orderDate: {
-  //   type: Date,
-  //   default: Date.now,
-  // },
-
-  // products: [
-  //   {
-  //     color: {
-  //       type: String,
-  //     },
-  //     size: {
-  //       type: String,
-  //     },
-  //     quantity: {
-  //       type: Number,
-  //     },
-  //     image: {
-  //       type: String,
-  //     },
-  //     productName: {
-  //       type: String,
-  //     },
-  //     price: {
-  //       type: Number,
-  //     },
-  //   },
-  // ],
-
-  // productIds: [
-  //   {
-  //     type: mongoose.Schema.Types.ObjectId,
-  //     ref: 'Product',
-  //   },
-  // ],
-  // totalPrice: { type: Number },
-
-  // paymentType: { type: String, required: true },
-  // createdDate: { type: Date },
 });
 
 module.exports = mongoose.model('Order', orderSchema);

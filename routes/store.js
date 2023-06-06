@@ -27,29 +27,7 @@ router.get('/productId/:productCode', getProductDetail); // 특정 상품 데이
 // 상품 검색 /store/search
 router.post('/search', searchProduct);
 
-// 상품 바로 주문하기  /store/sendOrder
-// router.post('/sendOrder', sendOrder);
-
 // 상품 주문
 router.post('/order', addOrder);
-
-// ------------------- 예비 코드 -------------------
-// /store/beanie
-// router.get('/beanie', getBeanieProducts);
-
-// /store/cap
-// router.get('/cap', (req, res) => {
-//   res.send('캡 페이지입니다.');
-// });
-
-// // /store/training
-// router.get('/training', (req, res) => {
-//   res.send('트레이닝 페이지입니다.');
-// });
-
-// // /store/windbreaker
-// router.get('/windbreaker', (req, res) => {
-//   res.send('윈드브레이커 페이지입니다.');
-// });
 
 module.exports = router;
