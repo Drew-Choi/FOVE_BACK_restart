@@ -157,7 +157,12 @@ const tossCancel = async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err).json({ message: '알 수 없는 오류' });
+    if (err.code === 11000) {
+      res.status(409).json('중복된 취소 오류');
+    } else {
+      console.error(err);
+      res.status(500).json('결제 취소 실패');
+    }
   }
 };
 
@@ -227,13 +232,8 @@ const tossCancelAdmin = async (req, res) => {
           },
           recipient: searchOrder.recipient,
           products: searchOrder.products,
-          isOrdered: false,
-          isShipping: false,
           shippingCode,
-          isDelivered: false,
           isCancel: true,
-          isReturn: false,
-          isReturnSubmit: false,
           submitReturn,
         };
 
@@ -248,7 +248,11 @@ const tossCancelAdmin = async (req, res) => {
       res.status(401).json({ message: '아이디 조회 실패' });
     }
   } catch (err) {
-    console.error(err).json({ message: '알 수 없는 오류' });
+    if (err.code === 11000) {
+      res.status(409).json('고유 값 중복 오류');
+    }
+    console.error(err);
+    res.status(500).json({ message: '알 수 없는 오류' });
   }
 };
 
@@ -318,13 +322,11 @@ const tossCancelAdminRefund = async (req, res) => {
           },
           recipient: searchOrder.recipient,
           products: searchOrder.products,
-          isOrdered: false,
-          isShipping: false,
           shippingCode,
-          isDelivered: false,
           isCancel: true,
-          isReturn: true,
-          isReturnSubmit: false,
+          isRetrieved: true,
+          isRefund: true,
+          isReturnSubmit: true,
           submitReturn,
         };
 
@@ -339,6 +341,9 @@ const tossCancelAdminRefund = async (req, res) => {
       res.status(401).json({ message: '아이디 조회 실패' });
     }
   } catch (err) {
+    if (err.code === 11000) {
+      res.status(409).json('고유 값 중복 오류');
+    }
     console.error(err).json({ message: '알 수 없는 오류' });
   }
 };
