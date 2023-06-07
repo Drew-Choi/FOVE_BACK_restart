@@ -449,6 +449,33 @@ const reqAdminShippingCondition = async (req, res) => {
   }
 };
 
+// Admin 환불 신청만
+const submitRefund = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    const newValue = {
+      'payments.status': 'DONE',
+      isShipping: false,
+      isDelivered: true,
+      isCancel: false,
+      isReturn: false,
+      isRetrieved: false,
+      isRefund: true,
+      isReturnSubmit: true,
+    };
+
+    const updateData = await Order.findOneAndUpdate({ 'payments.orderId': orderId }, { $set: newValue }, { new: true });
+
+    if (!updateData) return res.status(404).json('주문번호 없음');
+    // true라면, 아래
+    res.status(200).json('환불신청 완료');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 module.exports = {
   getMemberOrderList,
   orderCancelGetItem,
@@ -461,4 +488,5 @@ module.exports = {
   adminadminOrderReturnCanel,
   clientOrderDelete,
   reqAdminShippingCondition,
+  submitRefund,
 };

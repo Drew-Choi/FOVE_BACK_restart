@@ -285,6 +285,7 @@ const submitReturnList = async (req, res) => {
             $set: {
               isDelivered: true,
               isShipping: false,
+              shippingCode: orderInfo.shippingCode,
               isReturnSubmit: true,
               submitReturn: {
                 submitAt: nowDayTime(),
@@ -388,14 +389,15 @@ const cancelSubmitReturnAdmin = async (req, res) => {
         { 'payments.orderId': orderId },
         {
           $set: {
-            isDelivered: true,
             isShipping: false,
+            shippingCode: orderInfo.shippingCode,
+            isDelivered: true,
             isReturnSubmit: false,
             submitReturn: {
               submitAt: '',
               reason: '',
               return_message: '',
-              return_img: '',
+              return_img: [],
             },
           },
         },

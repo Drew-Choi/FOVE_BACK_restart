@@ -24,6 +24,7 @@ const {
   adminOrderReturn,
   adminadminOrderReturnCanel,
   reqAdminShippingCondition,
+  submitRefund,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
@@ -131,7 +132,11 @@ router.post('/orderlist/detail/shippingCondition', reqAdminShippingCondition);
 router.post('/orderlist/detail/cancel', tossCancelAdmin);
 
 // 어드민에서 결제 취소- 환불용(반환받을 상품이 있어 따로 분리)
-router.post('/orderlist/detail/cancelRefund', tossCancelAdminRefund);
+// 환불 신청만
+router.post('/orderlist/detail/cancelRefund', submitRefund);
+
+// 상품 회수 후 최종적으로 결제 취소
+router.post('/orderlist/detail/cancelRefund/complete', tossCancelAdminRefund);
 
 // 입금 전 주문강제취소 /admin/orderlist/detail/order_delete/:orderId
 router.get('/orderlist/detail/order_delete/:orderId', adminOrderDelete);
