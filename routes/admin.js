@@ -23,6 +23,7 @@ const {
   adminOrderDelete,
   adminOrderReturn,
   adminadminOrderReturnCanel,
+  reqAdminShippingCondition,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
@@ -122,6 +123,9 @@ router.get('/cancel_list', getAdminCancelList);
 
 // 어드민 전체 주문리스트에서 디테일영역으로 /admin/orderlist/detail/:orderId
 router.get('/orderlist/detail/:orderId', getAdminOrderListDetail);
+
+// 어드민 주문배송상태 컨트롤 /admin/orderlist/detail/shippingCondition
+router.post('/orderlist/detail/shippingCondition', reqAdminShippingCondition);
 
 // 어드민에서 결제 취소하기 /admin/orderlist/detail/cancel
 router.post('/orderlist/detail/cancel', tossCancelAdmin);

@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 const jwt = require('jsonwebtoken');
 const cheerio = require('cheerio');
 const { default: axios } = require('axios');
@@ -72,6 +73,45 @@ const individualCheckAdmin = async (arr) => {
       return null;
     }
   });
+};
+
+// 1개 상품 한진배송 체크_어드민
+const oneCheckAdmin = async (orderId, shippingCode) => {
+  const shippingInfo = await axios.get(
+    // eslint-disable-next-line max-len
+    `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${shippingCode}`,
+    {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    },
+  );
+  if (shippingInfo.status === 200) {
+    const $ = cheerio.load(shippingInfo.data);
+    // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
+    const trackingNumber = $('p[class="comm-sec"]').text().trim();
+    // trackingNumber.includes('배송완료')가 false 이면 바로 종료
+    if (!trackingNumber.includes('배송완료')) return null;
+
+    // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
+    const update = await Order.findOneAndUpdate(
+      { 'payments.orderId': orderId, shippingCode },
+      // eslint-disable-next-line object-curly-newline
+      {
+        $set: {
+          isShipping: false,
+          isDelivered: true,
+          isCancel: false,
+          isReturn: false,
+          isRetrieved: false,
+          isRefund: false,
+          isReturnSubmit: false,
+        },
+      },
+      { new: true },
+    );
+    return update;
+  }
 };
 
 // 모든 주문내역서 가져오기
@@ -327,6 +367,88 @@ const adminadminOrderReturnCanel = async (req, res) => {
   }
 };
 
+// Admin 배송상태 컨트롤러(라디오박스)
+const reqAdminShippingCondition = async (req, res) => {
+  try {
+    const { orderId, adminShippingCondition, shippingCode } = req.body;
+
+    const search = await Order.findOne({ 'payments.orderId': orderId });
+
+    if (!search) return res.status(400).json('주문번호 오류');
+    // 주문내역이 잘 들어왔다면 아래,
+    const selectStatusOption = (data) => {
+      switch (data) {
+        case '결제 전':
+          const statusInfo1 = {
+            'payments.status': 'READY',
+            isShipping: false,
+            shippingCode: 0,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: false,
+          };
+          return statusInfo1;
+        case '결제완료 (배송 전)':
+          const statusInfo2 = {
+            'payments.status': 'DONE',
+            isShipping: false,
+            shippingCode: 0,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: false,
+          };
+          return statusInfo2;
+        case '배송 중':
+          const statusInfo3 = {
+            'payments.status': 'DONE',
+            isShipping: true,
+            shippingCode,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: false,
+          };
+          return statusInfo3;
+        default:
+          return null;
+      }
+    };
+
+    if (selectStatusOption(adminShippingCondition) === null) {
+      if (adminShippingCondition === '배송완료') {
+        const shippingInfo = await oneCheckAdmin(orderId, search.shippingCode);
+        if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
+        // shippingInfo가 null이 아니라면,
+        res.status(200).json(shippingInfo);
+      } else {
+        res.status(400).json('입력오류');
+      }
+    } else {
+      // 아니라면,
+      const updateData = await Order.findOneAndUpdate(
+        { 'payments.orderId': orderId },
+        { $set: selectStatusOption(adminShippingCondition) },
+        { new: true },
+      );
+      res.status(200).json(updateData);
+    }
+  } catch (err) {
+    if (err.code === 11000) {
+      res.status(409).json('주문번호 중복');
+    }
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 module.exports = {
   getMemberOrderList,
   orderCancelGetItem,
@@ -338,4 +460,5 @@ module.exports = {
   adminOrderReturn,
   adminadminOrderReturnCanel,
   clientOrderDelete,
+  reqAdminShippingCondition,
 };
