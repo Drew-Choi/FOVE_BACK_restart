@@ -38,6 +38,7 @@ const individualCheck = async (arr, decodedId) => {
       if (!trackingNumber.includes('배송완료')) return null;
 
       // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
+      // 일반배송
       if (
         el.payments.status === 'DONE' &&
         el.isShipping &&
@@ -64,6 +65,7 @@ const individualCheck = async (arr, decodedId) => {
           },
         );
       } else if (
+        // 상품회수(교환)
         el.payments.status === 'DONE' &&
         el.isShipping &&
         el.shippingCode !== 0 &&
@@ -89,6 +91,7 @@ const individualCheck = async (arr, decodedId) => {
           },
         );
       } else if (
+        // 상품회수(환불)
         el.payments.status === 'DONE' &&
         el.isShipping &&
         el.shippingCode !== 0 &&
@@ -110,6 +113,32 @@ const individualCheck = async (arr, decodedId) => {
               isRetrieved: true,
               isRefund: true,
               isReturnSubmit: true,
+            },
+          },
+        );
+      } else if (
+        // 교환상품 배송 중
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        !el.isDelivered &&
+        !el.isCancel &&
+        el.isReturn &&
+        el.isRetrieved &&
+        !el.isRefund &&
+        el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { user: decodedId, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: true,
+              isCancel: false,
+              isReturn: true,
+              isRetrieved: false,
+              isRefund: false,
+              isReturnSubmit: false,
             },
           },
         );
@@ -140,6 +169,7 @@ const individualCheckAdmin = async (arr) => {
       if (!trackingNumber.includes('배송완료')) return null;
 
       // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
+      // 일반배송
       if (
         el.payments.status === 'DONE' &&
         el.isShipping &&
@@ -166,6 +196,7 @@ const individualCheckAdmin = async (arr) => {
           },
         );
       } else if (
+        // 상품회수(교환)
         el.payments.status === 'DONE' &&
         el.isShipping &&
         el.shippingCode !== 0 &&
@@ -191,6 +222,7 @@ const individualCheckAdmin = async (arr) => {
           },
         );
       } else if (
+        // 상품회수(환불)
         el.payments.status === 'DONE' &&
         el.isShipping &&
         el.shippingCode !== 0 &&
@@ -212,6 +244,32 @@ const individualCheckAdmin = async (arr) => {
               isRetrieved: true,
               isRefund: true,
               isReturnSubmit: true,
+            },
+          },
+        );
+      } else if (
+        // 교환상품 배송 중
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        !el.isDelivered &&
+        !el.isCancel &&
+        el.isReturn &&
+        el.isRetrieved &&
+        !el.isRefund &&
+        el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: true,
+              isCancel: false,
+              isReturn: true,
+              isRetrieved: false,
+              isRefund: false,
+              isReturnSubmit: false,
             },
           },
         );
@@ -298,6 +356,68 @@ const oneCheckAdminRefund = async (orderId, shippingCode) => {
       { new: true },
     );
     return update;
+  }
+};
+
+// 1개 상품 한진배송 체크_어드민 - 교환용
+const oneCheckAdminChange = async (orderId, shippingCode, status) => {
+  const shippingInfo = await axios.get(
+    // eslint-disable-next-line max-len
+    `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${shippingCode}`,
+    {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    },
+  );
+  if (shippingInfo.status === 200) {
+    const $ = cheerio.load(shippingInfo.data);
+    // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
+    const trackingNumber = $('p[class="comm-sec"]').text().trim();
+    // trackingNumber.includes('배송완료')가 false 이면 바로 종료
+    if (!trackingNumber.includes('배송완료')) return null;
+
+    // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
+    if (status === '상품회수 완료 (교환)') {
+      const update = await Order.findOneAndUpdate(
+        { 'payments.orderId': orderId, shippingCode },
+        // eslint-disable-next-line object-curly-newline
+        {
+          $set: {
+            'payments.status': 'DONE',
+            isShipping: false,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: true,
+            isRetrieved: true,
+            isRefund: false,
+            isReturnSubmit: true,
+          },
+        },
+        { new: true },
+      );
+      return update;
+    }
+    if (status === '교환상품 배송완료') {
+      const update = await Order.findOneAndUpdate(
+        { 'payments.orderId': orderId, shippingCode },
+        // eslint-disable-next-line object-curly-newline
+        {
+          $set: {
+            'payments.status': 'DONE',
+            isShipping: false,
+            isDelivered: true,
+            isCancel: false,
+            isReturn: true,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: false,
+          },
+        },
+        { new: true },
+      );
+      return update;
+    }
   }
 };
 
@@ -421,7 +541,6 @@ const getAdminOrderList = async (req, res) => {
       'payments.status': 'DONE',
       isShipping: true,
       isCancel: false,
-      isRetrieved: false,
     });
 
     if (!getSelectOrderedListArr || getSelectOrderedListArr.length === 0) {
@@ -621,6 +740,103 @@ const reqAdminShippingCondition = async (req, res) => {
   }
 };
 
+// Admin 교환진행상태 컨트롤러(라디오박스)
+const reqAdminChangeCondition = async (req, res) => {
+  try {
+    const { orderId, adminChangeCondition, shippingCode } = req.body;
+
+    const search = await Order.findOne({ 'payments.orderId': orderId });
+
+    if (!search) return res.status(400).json('주문번호 오류');
+    // 주문내역이 잘 들어왔다면 아래,
+    const selectStatusOption = (data, preShippingCode, code) => {
+      switch (data) {
+        case '교환신청 완료':
+          const statusInfo1 = {
+            'payments.status': 'DONE',
+            isShipping: false,
+            shippingCode: preShippingCode,
+            isDelivered: true,
+            isCancel: false,
+            isReturn: true,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: true,
+          };
+          return statusInfo1;
+        case '상품회수 중 (교환)':
+          const err = 400;
+          const statusInfo2 = {
+            'payments.status': 'DONE',
+            isShipping: true,
+            shippingCode: code,
+            isDelivered: true,
+            isCancel: false,
+            isReturn: true,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: true,
+          };
+          if (preShippingCode === code) return err;
+          // 일치하지 않는다면 새로운 객체로 전달
+          return statusInfo2;
+        case '교환상품 배송 중':
+          const err2 = 4000;
+          const statusInfo3 = {
+            'payments.status': 'DONE',
+            isShipping: true,
+            shippingCode: code,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: true,
+            isRetrieved: true,
+            isRefund: false,
+            isReturnSubmit: true,
+          };
+          if (preShippingCode === code) return err2;
+          // 일치하지 않는다면 새로운 객체로 전달
+          return statusInfo3;
+        default:
+          return null;
+      }
+    };
+
+    if (selectStatusOption(adminChangeCondition, search.shippingCode, shippingCode) === null) {
+      if (adminChangeCondition === '상품회수 완료 (교환)') {
+        const shippingInfo = await oneCheckAdminChange(orderId, search.shippingCode, adminChangeCondition);
+        if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
+        // shippingInfo가 null이 아니라면,
+        res.status(200).json(shippingInfo);
+      } else if (adminChangeCondition === '교환상품 배송완료') {
+        const shippingInfo = await oneCheckAdminChange(orderId, search.shippingCode, adminChangeCondition);
+        if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
+        // shippingInfo가 null이 아니라면,
+        res.status(200).json(shippingInfo);
+      } else {
+        res.status(400).json('사용자 입력오류');
+      }
+    } else if (selectStatusOption(adminChangeCondition, search.shippingCode, shippingCode) === 400) {
+      res.status(400).json('이전 송장입니다.\n유효한 회수용 송장으로 다시 입력바랍니다.');
+    } else if (selectStatusOption(adminChangeCondition, search.shippingCode, shippingCode) === 4000) {
+      res.status(400).json('이전 송장입니다.\n교환상품 배송용 송장으로 다시 입력바랍니다.');
+    } else {
+      // 아니라면,
+      const updateData = await Order.findOneAndUpdate(
+        { 'payments.orderId': orderId },
+        { $set: selectStatusOption(adminChangeCondition, search.shippingCode, shippingCode) },
+        { new: true },
+      );
+      res.status(200).json(updateData);
+    }
+  } catch (err) {
+    if (err.code === 11000) {
+      res.status(409).json('주문번호 중복');
+    }
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 // Admin 환불진행상태 컨트롤러(라디오박스)
 const reqAdminSubmitReturnCondition = async (req, res) => {
   try {
@@ -782,4 +998,5 @@ module.exports = {
   reqAdminSubmitReturnCondition,
   submitRefund,
   submitRefundCancel,
+  reqAdminChangeCondition,
 };

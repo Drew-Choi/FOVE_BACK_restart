@@ -283,9 +283,14 @@ const submitReturnList = async (req, res) => {
           { user: decoded.id, 'payments.orderId': orderId },
           {
             $set: {
-              isDelivered: true,
+              'payments.status': 'DONE',
               isShipping: false,
               shippingCode: orderInfo.shippingCode,
+              isDelivered: true,
+              isCancel: false,
+              isReturn: false,
+              isRetrieved: false,
+              isRefund: false,
               isReturnSubmit: true,
               submitReturn: {
                 submitAt: nowDayTime(),

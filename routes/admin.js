@@ -26,6 +26,7 @@ const {
   submitRefund,
   reqAdminSubmitReturnCondition,
   submitRefundCancel,
+  reqAdminChangeCondition,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
@@ -131,6 +132,9 @@ router.post('/orderlist/detail/shippingCondition', reqAdminShippingCondition);
 
 // 어드민 환불진행상태 컨트롤 /admin/orderlist/detail/submitReturn
 router.post('/orderlist/detail/submitReturnCondition', reqAdminSubmitReturnCondition);
+
+// 교환상태변경/orderlist/detail/changeCondition
+router.post('/orderlist/detail/changeCondition', reqAdminChangeCondition);
 
 // 어드민에서 결제 취소하기 /admin/orderlist/detail/cancel
 router.post('/orderlist/detail/cancel', tossCancelAdmin);
