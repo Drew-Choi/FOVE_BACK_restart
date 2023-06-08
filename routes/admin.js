@@ -22,9 +22,10 @@ const {
   getAdminOrderListDetail,
   adminOrderDelete,
   adminOrderReturn,
-  adminadminOrderReturnCanel,
   reqAdminShippingCondition,
   submitRefund,
+  reqAdminSubmitReturnCondition,
+  submitRefundCancel,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
@@ -128,12 +129,18 @@ router.get('/orderlist/detail/:orderId', getAdminOrderListDetail);
 // 어드민 주문배송상태 컨트롤 /admin/orderlist/detail/shippingCondition
 router.post('/orderlist/detail/shippingCondition', reqAdminShippingCondition);
 
+// 어드민 환불진행상태 컨트롤 /admin/orderlist/detail/submitReturn
+router.post('/orderlist/detail/submitReturnCondition', reqAdminSubmitReturnCondition);
+
 // 어드민에서 결제 취소하기 /admin/orderlist/detail/cancel
 router.post('/orderlist/detail/cancel', tossCancelAdmin);
 
 // 어드민에서 결제 취소- 환불용(반환받을 상품이 있어 따로 분리)
 // 환불 신청만
 router.post('/orderlist/detail/cancelRefund', submitRefund);
+
+// 환불 & 교환 신청 철회
+router.post('/orderlist/detail/cancelRefund/cancel', submitRefundCancel);
 
 // 상품 회수 후 최종적으로 결제 취소
 router.post('/orderlist/detail/cancelRefund/complete', tossCancelAdminRefund);
@@ -143,8 +150,5 @@ router.get('/orderlist/detail/order_delete/:orderId', adminOrderDelete);
 
 // 반품신청 후 교환 진행 시 /admin/orderlist/detail/order_return/:orderId
 router.get('/orderlist/detail/order_return/:orderId', adminOrderReturn);
-
-// 교환 철회 버튼(관리자만 가능) /admin/orderlist/detail/order_return/cancel/:orderId
-router.get('/orderlist/detail/order_return/cancel/:orderId', adminadminOrderReturnCanel);
 
 module.exports = router;

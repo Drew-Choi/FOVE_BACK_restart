@@ -256,7 +256,7 @@ const tossCancelAdmin = async (req, res) => {
   }
 };
 
-// Admin에서 관리자가 강제 결제취소 - 환불용
+// Admin에서 관리자가 강제 결제취소 - 환불용 - 상품 수령확인 후 진행
 const tossCancelAdminRefund = async (req, res) => {
   try {
     const { orderId } = req.body;

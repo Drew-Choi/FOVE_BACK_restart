@@ -179,7 +179,7 @@ const deleteProduct = async (req, res) => {
     for (let i = 0; i < deletedProduct.img.length; i += 1) {
       const imgPath = `./uploads/${deletedProduct.img[i]}`;
       fs.unlink(imgPath, (err) => {
-        if (err) {
+        if (err && err.code !== 'ENOENT') {
           console.error(err);
           res.status(500).json('내부오류');
         }
@@ -203,7 +203,7 @@ const deleteImgProduct = async (req, res) => {
       // 이미지 원본 삭제
       const imgPath = `./uploads/${imgURL}`;
       fs.unlink(imgPath, (err) => {
-        if (err) {
+        if (err && err.code !== 'ENOENT') {
           console.error(err);
           res.status(500).json('내부 오류');
         }
@@ -328,7 +328,7 @@ const cancelSubmitReturn = async (req, res) => {
 
         const imgPath = `./uploads/${orderId}`;
         fs.rm(imgPath, { recursive: true }, (error) => {
-          if (error) {
+          if (error && error.code !== 'ENOENT') {
             console.error(error);
             res.status(500).json('내부오류');
           }
@@ -342,6 +342,7 @@ const cancelSubmitReturn = async (req, res) => {
             $set: {
               isDelivered: true,
               isShipping: false,
+              shippingCode: orderInfo.shippingCode,
               isReturnSubmit: false,
               submitReturn: {
                 submitAt: '',
@@ -378,7 +379,7 @@ const cancelSubmitReturnAdmin = async (req, res) => {
       // 해당 신청 이미지 지우기
       const imgPath = `./uploads/${orderId}`;
       fs.rm(imgPath, { recursive: true }, (error) => {
-        if (error) {
+        if (error && error.code !== 'ENOENT') {
           console.error(error);
           res.status(500).json('내부오류');
         }

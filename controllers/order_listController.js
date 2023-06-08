@@ -2,10 +2,11 @@
 const jwt = require('jsonwebtoken');
 const cheerio = require('cheerio');
 const { default: axios } = require('axios');
+const fs = require('fs');
 
 require('../mongooseConnect');
 const Order = require('../models/order');
-const Cancle = require('../models/cancel');
+const Cancel = require('../models/cancel');
 
 const { JWT_ACCESS_SECRET } = process.env;
 
@@ -37,11 +38,84 @@ const individualCheck = async (arr, decodedId) => {
       if (!trackingNumber.includes('배송완료')) return null;
 
       // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
-      await Order.findOneAndUpdate(
-        { user: decodedId, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
-        { $set: { isShipping: false, isDelivered: true } },
-      );
-      return null;
+      if (
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        !el.isDelivered &&
+        !el.isCancel &&
+        !el.isReturn &&
+        !el.isRetrieved &&
+        !el.isRefund &&
+        !el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { user: decodedId, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: true,
+              isCancel: false,
+              isReturn: false,
+              isRetrieved: false,
+              isRefund: false,
+              isReturnSubmit: false,
+            },
+          },
+        );
+      } else if (
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        el.isDelivered &&
+        !el.isCancel &&
+        el.isReturn &&
+        !el.isRetrieved &&
+        !el.isRefund &&
+        el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { user: decodedId, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: false,
+              isCancel: false,
+              isReturn: true,
+              isRetrieved: true,
+              isRefund: false,
+              isReturnSubmit: true,
+            },
+          },
+        );
+      } else if (
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        el.isDelivered &&
+        !el.isCancel &&
+        !el.isReturn &&
+        !el.isRetrieved &&
+        el.isRefund &&
+        el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { user: decodedId, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: false,
+              isCancel: false,
+              isReturn: false,
+              isRetrieved: true,
+              isRefund: true,
+              isReturnSubmit: true,
+            },
+          },
+        );
+      } else {
+        return null;
+      }
     }
   });
 };
@@ -66,11 +140,84 @@ const individualCheckAdmin = async (arr) => {
       if (!trackingNumber.includes('배송완료')) return null;
 
       // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
-      await Order.findOneAndUpdate(
-        { 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
-        { $set: { isShipping: false, isDelivered: true } },
-      );
-      return null;
+      if (
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        !el.isDelivered &&
+        !el.isCancel &&
+        !el.isReturn &&
+        !el.isRetrieved &&
+        !el.isRefund &&
+        !el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: true,
+              isCancel: false,
+              isReturn: false,
+              isRetrieved: false,
+              isRefund: false,
+              isReturnSubmit: false,
+            },
+          },
+        );
+      } else if (
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        el.isDelivered &&
+        !el.isCancel &&
+        el.isReturn &&
+        !el.isRetrieved &&
+        !el.isRefund &&
+        el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: false,
+              isCancel: false,
+              isReturn: true,
+              isRetrieved: true,
+              isRefund: false,
+              isReturnSubmit: true,
+            },
+          },
+        );
+      } else if (
+        el.payments.status === 'DONE' &&
+        el.isShipping &&
+        el.shippingCode !== 0 &&
+        el.isDelivered &&
+        !el.isCancel &&
+        !el.isReturn &&
+        !el.isRetrieved &&
+        el.isRefund &&
+        el.isReturnSubmit
+      ) {
+        await Order.findOneAndUpdate(
+          { 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
+          {
+            $set: {
+              isShipping: false,
+              isDelivered: false,
+              isCancel: false,
+              isReturn: false,
+              isRetrieved: true,
+              isRefund: true,
+              isReturnSubmit: true,
+            },
+          },
+        );
+      } else {
+        return null;
+      }
     }
   });
 };
@@ -114,6 +261,46 @@ const oneCheckAdmin = async (orderId, shippingCode) => {
   }
 };
 
+// 1개 상품 한진배송 체크_어드민 - 환불용
+const oneCheckAdminRefund = async (orderId, shippingCode) => {
+  const shippingInfo = await axios.get(
+    // eslint-disable-next-line max-len
+    `https://www.hanjin.co.kr/kor/CMS/DeliveryMgr/WaybillResult.do?mCode=MN038&schLang=KR&wblnumText2=${shippingCode}`,
+    {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    },
+  );
+  if (shippingInfo.status === 200) {
+    const $ = cheerio.load(shippingInfo.data);
+    // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
+    const trackingNumber = $('p[class="comm-sec"]').text().trim();
+    // trackingNumber.includes('배송완료')가 false 이면 바로 종료
+    if (!trackingNumber.includes('배송완료')) return null;
+
+    // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
+    const update = await Order.findOneAndUpdate(
+      { 'payments.orderId': orderId, shippingCode },
+      // eslint-disable-next-line object-curly-newline
+      {
+        $set: {
+          'payments.status': 'DONE',
+          isShipping: false,
+          isDelivered: false,
+          isCancel: false,
+          isReturn: false,
+          isRetrieved: true,
+          isRefund: true,
+          isReturnSubmit: true,
+        },
+      },
+      { new: true },
+    );
+    return update;
+  }
+};
+
 // 모든 주문내역서 가져오기
 const getMemberOrderList = async (req, res) => {
   try {
@@ -127,9 +314,10 @@ const getMemberOrderList = async (req, res) => {
       // 일단 모든 주문내역 중 payment.status: "DONE"이고, isShipping: true이고, isDelivered: false인 것만 모으기
       const getOrderedListArr = await Order.find({
         user: decoded.id,
-        isShipping: true,
-        isDelivered: false,
         'payments.status': 'DONE',
+        isShipping: true,
+        isCancel: false,
+        isRetrieved: false,
       });
 
       if (!getOrderedListArr || getOrderedListArr.length === 0) {
@@ -167,7 +355,7 @@ const getCancelList = async (req, res) => {
       if (err) return res.status(401).json({ message: '회원인증실패' });
 
       // 토큰 인증 성공시
-      const cancelListInfo = await Cancle.find({ user: decoded.id });
+      const cancelListInfo = await Cancel.find({ user: decoded.id });
       // 날짜순으로 확실히 정렬 내림차순
       const array = cancelListInfo.sort(
         (a, b) => changeTimetoNum(b.cancels.canceledAt) - changeTimetoNum(a.cancels.canceledAt),
@@ -190,7 +378,13 @@ const orderCancelGetItem = async (req, res) => {
 
       // 토큰 인증 성공시
       const orderInfo = await Order.findOne({ user: decoded.id, 'payments.orderId': orderId });
-      res.status(200).json(orderInfo);
+      if (!orderInfo) {
+        const canceledInfo = await Cancel.findOne({ user: decoded.id, 'payments.orderId': orderId });
+        // eslint-disable-next-line no-unused-expressions
+        canceledInfo ? res.status(200).json(canceledInfo) : res.status(404).json('주문번호 없음');
+      } else {
+        res.status(200).json(orderInfo);
+      }
     });
   } catch (err) {
     console.error(err);
@@ -224,10 +418,10 @@ const clientOrderDelete = async (req, res) => {
 const getAdminOrderList = async (req, res) => {
   try {
     const getSelectOrderedListArr = await Order.find({
-      isOrdered: true,
-      isShipping: true,
-      isDelivered: false,
       'payments.status': 'DONE',
+      isShipping: true,
+      isCancel: false,
+      isRetrieved: false,
     });
 
     if (!getSelectOrderedListArr || getSelectOrderedListArr.length === 0) {
@@ -261,7 +455,7 @@ const getAdminOrderList = async (req, res) => {
 
 const getAdminCancelList = async (req, res) => {
   try {
-    const cancelListInfo = await Cancle.find({});
+    const cancelListInfo = await Cancel.find({});
 
     if (!cancelListInfo) return res.status(500).json('데이터 오류');
     // oderListInfo에 모든 정보가 잘 들어오면,
@@ -312,16 +506,24 @@ const adminOrderReturn = async (req, res) => {
   try {
     const { orderId } = req.params;
 
+    const search = await Order.findOne({ 'payments.orderId': orderId });
+
+    if (!search) res.status(404).json('주문번호 없음');
+    // true 라면
     const result = await Order.findOneAndUpdate(
       { 'payments.orderId': orderId },
       // eslint-disable-next-line object-curly-newline
       {
         $set: {
-          isDelivered: false,
+          'payments.status': 'DONE',
           isShipping: false,
+          shippingCode: search.shippingCode,
+          isDelivered: true,
           isCancel: false,
-          isReturnSubmit: false,
           isReturn: true,
+          isRetrieved: false,
+          isRefund: false,
+          isReturnSubmit: true,
         },
       },
       { new: true },
@@ -330,36 +532,6 @@ const adminOrderReturn = async (req, res) => {
     if (!result) return res.status(400).json('주문번호 찾지 못함, 교환신청 실패');
     // result가 true이면,
     res.status(200).json('반품신청 성공');
-    return;
-  } catch (err) {
-    console.error(err);
-    res.status(500).json('알 수 없는 오류');
-  }
-};
-
-// 교환신청 철회시 관리자만 가능
-const adminadminOrderReturnCanel = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-
-    const result = await Order.findOneAndUpdate(
-      { 'payments.orderId': orderId },
-      // eslint-disable-next-line object-curly-newline
-      {
-        $set: {
-          isDelivered: true,
-          isShipping: false,
-          isCancel: false,
-          isReturnSubmit: false,
-          isReturn: false,
-        },
-      },
-      { new: true },
-    );
-
-    if (!result) return res.status(400).json('주문번호 찾지 못함, 교환철회 실패');
-    // result가 true이면,
-    res.status(200).json('반품신청 철회 성공');
     return;
   } catch (err) {
     console.error(err);
@@ -376,7 +548,7 @@ const reqAdminShippingCondition = async (req, res) => {
 
     if (!search) return res.status(400).json('주문번호 오류');
     // 주문내역이 잘 들어왔다면 아래,
-    const selectStatusOption = (data) => {
+    const selectStatusOption = (data, code) => {
       switch (data) {
         case '결제 전':
           const statusInfo1 = {
@@ -408,7 +580,7 @@ const reqAdminShippingCondition = async (req, res) => {
           const statusInfo3 = {
             'payments.status': 'DONE',
             isShipping: true,
-            shippingCode,
+            shippingCode: code,
             isDelivered: false,
             isCancel: false,
             isReturn: false,
@@ -422,7 +594,7 @@ const reqAdminShippingCondition = async (req, res) => {
       }
     };
 
-    if (selectStatusOption(adminShippingCondition) === null) {
+    if (selectStatusOption(adminShippingCondition, shippingCode) === null) {
       if (adminShippingCondition === '배송완료') {
         const shippingInfo = await oneCheckAdmin(orderId, search.shippingCode);
         if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
@@ -435,7 +607,81 @@ const reqAdminShippingCondition = async (req, res) => {
       // 아니라면,
       const updateData = await Order.findOneAndUpdate(
         { 'payments.orderId': orderId },
-        { $set: selectStatusOption(adminShippingCondition) },
+        { $set: selectStatusOption(adminShippingCondition, shippingCode) },
+        { new: true },
+      );
+      res.status(200).json(updateData);
+    }
+  } catch (err) {
+    if (err.code === 11000) {
+      res.status(409).json('주문번호 중복');
+    }
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
+// Admin 환불진행상태 컨트롤러(라디오박스)
+const reqAdminSubmitReturnCondition = async (req, res) => {
+  try {
+    const { orderId, adminSubmitReturnCondition, shippingCode } = req.body;
+
+    const search = await Order.findOne({ 'payments.orderId': orderId });
+
+    if (!search) return res.status(400).json('주문번호 오류');
+    // 주문내역이 잘 들어왔다면 아래,
+    const selectStatusOption = (data, preShippingCode, code) => {
+      switch (data) {
+        case '환불신청완료':
+          const statusInfo1 = {
+            'payments.status': 'DONE',
+            isShipping: false,
+            shippingCode: preShippingCode,
+            isDelivered: true,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: true,
+            isReturnSubmit: true,
+          };
+          return statusInfo1;
+        case '상품회수 중 (환불)':
+          const err = 400;
+          const statusInfo2 = {
+            'payments.status': 'DONE',
+            isShipping: true,
+            shippingCode: code,
+            isDelivered: true,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: true,
+            isReturnSubmit: true,
+          };
+          if (preShippingCode === code) return err;
+          // 일치하지 않는다면 새로운 객체로 전달
+          return statusInfo2;
+        default:
+          return null;
+      }
+    };
+
+    if (selectStatusOption(adminSubmitReturnCondition, search.shippingCode, shippingCode) === null) {
+      if (adminSubmitReturnCondition === '상품회수 완료 (환불)') {
+        const shippingInfo = await oneCheckAdminRefund(orderId, search.shippingCode);
+        if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
+        // shippingInfo가 null이 아니라면,
+        res.status(200).json(shippingInfo);
+      } else {
+        res.status(400).json('사용자 입력오류');
+      }
+    } else if (selectStatusOption(adminSubmitReturnCondition, search.shippingCode, shippingCode) === 400) {
+      res.status(400).json('이전 송장입니다.\n유효한 회수용 송장으로 다시 입력바랍니다.');
+    } else {
+      // 아니라면,
+      const updateData = await Order.findOneAndUpdate(
+        { 'payments.orderId': orderId },
+        { $set: selectStatusOption(adminSubmitReturnCondition, search.shippingCode, shippingCode) },
         { new: true },
       );
       res.status(200).json(updateData);
@@ -476,6 +722,52 @@ const submitRefund = async (req, res) => {
   }
 };
 
+// Admin 환불 & 교환 신청 철회
+const submitRefundCancel = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+
+    // 주문내역 검증
+    const search = await Order.findOne({ 'payments.orderId': orderId });
+
+    if (!search) return res.status(404).json('해당 주문내역 없음');
+    // ture이면 다음 진행
+    // 해당 신청 이미지 지우기
+    const imgPath = `./uploads/${orderId}`;
+    fs.rm(imgPath, { recursive: true }, (error) => {
+      if (error && error.code !== 'ENOENT') {
+        console.error(error);
+        res.status(500).json('내부오류');
+      }
+    });
+    const newValue = {
+      'payments.status': 'DONE',
+      isShipping: false,
+      shippingCode: search.shippingCode,
+      isDelivered: true,
+      isCancel: false,
+      isReturn: false,
+      isRetrieved: false,
+      isRefund: false,
+      isReturnSubmit: false,
+      submitReturn: {
+        submitAt: '',
+        reason: '',
+        return_message: '',
+        return_img: '',
+      },
+    };
+    const updateData = await Order.findOneAndUpdate({ 'payments.orderId': orderId }, { $set: newValue }, { new: true });
+
+    if (!updateData) return res.status(404).json('주문번호 없음');
+    // true라면, 아래
+    res.status(200).json('취소 완료');
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 module.exports = {
   getMemberOrderList,
   orderCancelGetItem,
@@ -485,8 +777,9 @@ module.exports = {
   getAdminOrderListDetail,
   adminOrderDelete,
   adminOrderReturn,
-  adminadminOrderReturnCanel,
   clientOrderDelete,
   reqAdminShippingCondition,
+  reqAdminSubmitReturnCondition,
   submitRefund,
+  submitRefundCancel,
 };
