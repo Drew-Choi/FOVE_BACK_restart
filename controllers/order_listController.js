@@ -572,6 +572,7 @@ const getAdminOrderList = async (req, res) => {
   }
 };
 
+// 취소목록 불러오기
 const getAdminCancelList = async (req, res) => {
   try {
     const cancelListInfo = await Cancel.find({});
@@ -582,6 +583,74 @@ const getAdminCancelList = async (req, res) => {
     const array = cancelListInfo.sort(
       (a, b) => changeTimetoNum(b.cancels.canceledAt) - changeTimetoNum(a.cancels.canceledAt),
     );
+    res.status(200).json(array);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
+// Admin 송장입력 - 결제완료, 배송준비중 목록
+const getAdminDONEList = async (req, res) => {
+  try {
+    const getDoneListArr = await Order.find({
+      'payments.status': 'DONE',
+      isShipping: false,
+      shippingCode: 0,
+      isDelivered: false,
+      isCancel: false,
+      isReturn: false,
+      isRetrieved: false,
+      isRefund: false,
+      isReturnSubmit: false,
+    });
+
+    if (!getDoneListArr) return res.status(200).json('입금완료내역 없음');
+
+    // oderListInfo에 모든 정보가 잘 들어오면,
+    // 날짜순으로 확실히 정렬 내림차순
+    const array = getDoneListArr.sort(
+      (a, b) => changeTimetoNum(a.payments.approvedAt) - changeTimetoNum(b.payments.approvedAt),
+    );
+    res.status(200).json(array);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
+// Admin 송장입력 - 상품회수 목록
+const getAdminRetrievedList = async (req, res) => {
+  try {
+    const getRetrievedListArr = await Order.find({
+      'payments.status': 'DONE',
+      isShipping: false,
+      isDelivered: true,
+      isCancel: false,
+      isReturn: true,
+      isRetrieved: false,
+      isRefund: false,
+      isReturnSubmit: true,
+    });
+
+    const getRefundListArr = await Order.find({
+      'payments.status': 'DONE',
+      isShipping: false,
+      isDelivered: true,
+      isCancel: false,
+      isReturn: false,
+      isRetrieved: false,
+      isRefund: true,
+      isReturnSubmit: true,
+    });
+
+    const combineData = getRetrievedListArr.concat(getRefundListArr);
+
+    if (!combineData) return res.status(200).json('회수내역 없음');
+
+    // oderListInfo에 모든 정보가 잘 들어오면,
+    // 날짜순으로 확실히 정렬 내림차순
+    const array = combineData.sort((a, b) => a.submitReturn.submitAt - b.submitReturn.submitAt);
     res.status(200).json(array);
   } catch (err) {
     console.error(err);
@@ -999,4 +1068,6 @@ module.exports = {
   submitRefund,
   submitRefundCancel,
   reqAdminChangeCondition,
+  getAdminDONEList,
+  getAdminRetrievedList,
 };

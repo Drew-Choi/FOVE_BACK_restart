@@ -27,6 +27,8 @@ const {
   reqAdminSubmitReturnCondition,
   submitRefundCancel,
   reqAdminChangeCondition,
+  getAdminDONEList,
+  getAdminRetrievedList,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
@@ -120,6 +122,12 @@ router.post('/productlist/imgDelete', deleteImgProduct);
 
 // 전체 주문 리스트 /admin/orderlist
 router.get('/orderlist', getAdminOrderList);
+
+// 입금완료 내역만 /admin//orderlist/shippingcode
+router.get('/orderlist/shippingcode', getAdminDONEList);
+
+// 상품회수 대기 중인 것 모음(교환 + 환불) /admin//orderlist/retrieved
+router.get('/orderlist/retrieved', getAdminRetrievedList);
 
 // 전체 취소 리스트 /admin/cancel_list
 router.get('/cancel_list', getAdminCancelList);
