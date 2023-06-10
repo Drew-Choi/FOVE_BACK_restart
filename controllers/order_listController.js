@@ -658,6 +658,32 @@ const getAdminRetrievedList = async (req, res) => {
   }
 };
 
+// Admin 송장입력 - 교환상품배송준비중
+const getAdminReturnList = async (req, res) => {
+  try {
+    const getRetrievedListArr = await Order.find({
+      'payments.status': 'DONE',
+      isShipping: false,
+      isDelivered: false,
+      isCancel: false,
+      isReturn: true,
+      isRetrieved: true,
+      isRefund: false,
+      isReturnSubmit: true,
+    });
+
+    if (!getRetrievedListArr) return res.status(200).json('회수내역 없음');
+
+    // oderListInfo에 모든 정보가 잘 들어오면,
+    // 날짜순으로 확실히 정렬 내림차순
+    const array = getRetrievedListArr.sort((a, b) => a.submitReturn.submitAt - b.submitReturn.submitAt);
+    res.status(200).json(array);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json('알 수 없는 오류');
+  }
+};
+
 // Admin 송장입력등록 - 결제완료
 const registerShippingCode = async (req, res) => {
   try {
@@ -697,12 +723,6 @@ const registerShippingCode = async (req, res) => {
           $set: {
             isShipping: true,
             shippingCode,
-            isDelivered: false,
-            isCancel: false,
-            isReturn: false,
-            isRetrieved: false,
-            isRefund: false,
-            isReturnSubmit: false,
           },
         },
         {
@@ -724,7 +744,7 @@ const registerShippingCode = async (req, res) => {
 const registerShippingCodeRetrieved = async (req, res) => {
   try {
     // eslint-disable-next-line object-curly-newline
-    const { orderId, user, recipientName, recipientAddress, shippingCode } = req.body;
+    const { orderId, user, recipientName, recipientAddress, newShippingCode } = req.body;
 
     // 유효성검사
     const search = await Order.findOne({
@@ -735,18 +755,32 @@ const registerShippingCodeRetrieved = async (req, res) => {
     });
 
     if (!search) return res.status(404).json('주문번호 없음');
-    // 데이터가 잘 들어왔다면,
+    // 데이터가 잘 들어왔다면, 새로운 송장이랑 기존 송장이랑 다른지 검사
+    if (search.shippingCode === Number(newShippingCode))
+      return res.status(400).json('이전 송장입니다.\n유효한 회수용 송장으로 다시 입력바랍니다.');
+
+    // 아니라면 아래 진행
     if (
-      search.payments.status === 'DONE' &&
-      search.isOrdered &&
-      !search.isShipping &&
-      search.shippingCode === 0 &&
-      !search.isDelivered &&
-      !search.isCancel &&
-      !search.isReturn &&
-      !search.isRetrieved &&
-      !search.isRefund &&
-      !search.isReturnSubmit
+      (search.payments.status === 'DONE' &&
+        search.isOrdered &&
+        !search.isShipping &&
+        search.shippingCode !== 0 &&
+        search.isDelivered &&
+        !search.isCancel &&
+        search.isReturn &&
+        !search.isRetrieved &&
+        !search.isRefund &&
+        search.isReturnSubmit) ||
+      (search.payments.status === 'DONE' &&
+        search.isOrdered &&
+        !search.isShipping &&
+        search.shippingCode !== 0 &&
+        search.isDelivered &&
+        !search.isCancel &&
+        !search.isReturn &&
+        !search.isRetrieved &&
+        search.isRefund &&
+        search.isReturnSubmit)
     ) {
       const update = await Order.findOneAndUpdate(
         {
@@ -758,13 +792,67 @@ const registerShippingCodeRetrieved = async (req, res) => {
         {
           $set: {
             isShipping: true,
-            shippingCode,
-            isDelivered: false,
-            isCancel: false,
-            isReturn: false,
-            isRetrieved: false,
-            isRefund: false,
-            isReturnSubmit: false,
+            shippingCode: newShippingCode,
+          },
+        },
+        {
+          new: true,
+        },
+      );
+      if (!update) return res.status(500).json('등록실패');
+      // update가 잘되었다면,
+      res.status(200).json(update);
+    } else {
+      res.status(400).json('결제완료가 된 주문번호가 아닙니다.\nDB확인 요망');
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// Admin 회수용송장입력등록 - 교환상품배송용 송장
+const registerShippingCodeReturn = async (req, res) => {
+  try {
+    // eslint-disable-next-line object-curly-newline
+    const { orderId, user, recipientName, recipientAddress, newShippingCode } = req.body;
+
+    // 유효성검사
+    const search = await Order.findOne({
+      'payments.orderId': orderId,
+      user,
+      'recipient.recipientName': recipientName,
+      'recipient.recipientAddress': recipientAddress,
+    });
+
+    if (!search) return res.status(404).json('주문번호 없음');
+    // 데이터가 잘 들어왔다면, 새로운 송장이랑 기존 송장이랑 다른지 검사
+    if (search.shippingCode === Number(newShippingCode))
+      return res.status(400).json('회수용 송장입니다.\n유효한 배송용 송장으로 다시 입력바랍니다.');
+
+    // 아니라면 아래 진행
+    if (
+      search.payments.status === 'DONE' &&
+      search.isOrdered &&
+      !search.isShipping &&
+      search.shippingCode !== 0 &&
+      !search.isDelivered &&
+      !search.isCancel &&
+      search.isReturn &&
+      search.isRetrieved &&
+      !search.isRefund &&
+      search.isReturnSubmit
+    ) {
+      const update = await Order.findOneAndUpdate(
+        {
+          'payments.orderId': orderId,
+          user,
+          'recipient.recipientName': recipientName,
+          'recipient.recipientAddress': recipientAddress,
+        },
+        {
+          $set: {
+            isShipping: true,
+            shippingCode: newShippingCode,
           },
         },
         {
@@ -996,12 +1084,12 @@ const reqAdminChangeCondition = async (req, res) => {
 
     if (selectStatusOption(adminChangeCondition, search.shippingCode, shippingCode) === null) {
       if (adminChangeCondition === '상품회수 완료 (교환)') {
-        const shippingInfo = await oneCheckAdminChange(orderId, search.shippingCode, adminChangeCondition);
+        const shippingInfo = await oneCheckAdminChange(orderId, search.shippingCode, shippingCode);
         if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
         // shippingInfo가 null이 아니라면,
         res.status(200).json(shippingInfo);
       } else if (adminChangeCondition === '교환상품 배송완료') {
-        const shippingInfo = await oneCheckAdminChange(orderId, search.shippingCode, adminChangeCondition);
+        const shippingInfo = await oneCheckAdminChange(orderId, search.shippingCode, shippingCode);
         if (shippingInfo === null) return res.status(404).json('아직 배송 중 입니다.');
         // shippingInfo가 null이 아니라면,
         res.status(200).json(shippingInfo);
@@ -1196,4 +1284,6 @@ module.exports = {
   getAdminRetrievedList,
   registerShippingCode,
   registerShippingCodeRetrieved,
+  getAdminReturnList,
+  registerShippingCodeReturn,
 };
