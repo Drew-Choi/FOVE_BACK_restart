@@ -30,6 +30,7 @@ const {
   getAdminDONEList,
   getAdminRetrievedList,
   registerShippingCode,
+  registerShippingCodeRetrieved,
 } = require('../controllers/order_listController');
 
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
@@ -131,7 +132,10 @@ router.get('/orderlist/shippingcode', getAdminDONEList);
 router.get('/orderlist/retrieved', getAdminRetrievedList);
 
 // 송장등록-결제완료 /admin//orderlist/register_shippingCode
-router.get('/orderlist/register_shippingCode', registerShippingCode);
+router.post('/orderlist/register_shippingCode', registerShippingCode);
+
+// 송장등록-회수용 /admin//orderlist/register_shippingCode_retrieved
+router.post('/orderlist/register_shippingCode_retrieved', registerShippingCodeRetrieved);
 
 // 전체 취소 리스트 /admin/cancel_list
 router.get('/cancel_list', getAdminCancelList);

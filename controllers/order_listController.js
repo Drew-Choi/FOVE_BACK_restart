@@ -661,6 +661,7 @@ const getAdminRetrievedList = async (req, res) => {
 // Admin 송장입력등록 - 결제완료
 const registerShippingCode = async (req, res) => {
   try {
+    // eslint-disable-next-line object-curly-newline
     const { orderId, user, recipientName, recipientAddress, shippingCode } = req.body;
 
     // 유효성검사
@@ -694,7 +695,14 @@ const registerShippingCode = async (req, res) => {
         },
         {
           $set: {
+            isShipping: true,
             shippingCode,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: false,
           },
         },
         {
@@ -703,7 +711,69 @@ const registerShippingCode = async (req, res) => {
       );
       if (!update) return res.status(500).json('등록실패');
       // update가 잘되었다면,
-      res.status(200).json('송장등록 성공');
+      res.status(200).json(update);
+    } else {
+      res.status(400).json('결제완료가 된 주문번호가 아닙니다.\nDB확인 요망');
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// Admin 회수용송장입력등록 - 상품회수용 송장
+const registerShippingCodeRetrieved = async (req, res) => {
+  try {
+    // eslint-disable-next-line object-curly-newline
+    const { orderId, user, recipientName, recipientAddress, shippingCode } = req.body;
+
+    // 유효성검사
+    const search = await Order.findOne({
+      'payments.orderId': orderId,
+      user,
+      'recipient.recipientName': recipientName,
+      'recipient.recipientAddress': recipientAddress,
+    });
+
+    if (!search) return res.status(404).json('주문번호 없음');
+    // 데이터가 잘 들어왔다면,
+    if (
+      search.payments.status === 'DONE' &&
+      search.isOrdered &&
+      !search.isShipping &&
+      search.shippingCode === 0 &&
+      !search.isDelivered &&
+      !search.isCancel &&
+      !search.isReturn &&
+      !search.isRetrieved &&
+      !search.isRefund &&
+      !search.isReturnSubmit
+    ) {
+      const update = await Order.findOneAndUpdate(
+        {
+          'payments.orderId': orderId,
+          user,
+          'recipient.recipientName': recipientName,
+          'recipient.recipientAddress': recipientAddress,
+        },
+        {
+          $set: {
+            isShipping: true,
+            shippingCode,
+            isDelivered: false,
+            isCancel: false,
+            isReturn: false,
+            isRetrieved: false,
+            isRefund: false,
+            isReturnSubmit: false,
+          },
+        },
+        {
+          new: true,
+        },
+      );
+      if (!update) return res.status(500).json('등록실패');
+      // update가 잘되었다면,
+      res.status(200).json(update);
     } else {
       res.status(400).json('결제완료가 된 주문번호가 아닙니다.\nDB확인 요망');
     }
@@ -1125,4 +1195,5 @@ module.exports = {
   getAdminDONEList,
   getAdminRetrievedList,
   registerShippingCode,
+  registerShippingCodeRetrieved,
 };
