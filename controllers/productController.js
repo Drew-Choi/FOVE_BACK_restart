@@ -61,7 +61,9 @@ const createProduct = async (req, res) => {
 const getAllProducts = async (req, res) => {
   try {
     const product = await Product.find({});
-    res.status(200).json(product);
+
+    const arr = product.sort((a, b) => b.createAt - a.createAt);
+    res.status(200).json(arr);
   } catch (err) {
     console.error(err);
     res.status(500).send('상품 불러오기 실패(서버 에러)');

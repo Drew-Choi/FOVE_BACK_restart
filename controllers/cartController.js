@@ -2,6 +2,7 @@
 /* eslint-disable object-curly-newline */
 const jwt = require('jsonwebtoken');
 const Cart = require('../models/cart');
+const Product = require('../models/product');
 
 // ---------------------------- 장바구니 정보 조회(전체 상품 데이터, length) ----------------------------
 const getCartInfo = async (req, res) => {
@@ -37,23 +38,22 @@ const addProductToCart = async (req, res) => {
     const { JWT_ACCESS_SECRET } = process.env;
     // req.boy의 상품 정보들을 구조분해 할당으로 매칭시켜 변수 저장
     const { token } = req.body;
-    const { productName, productCode, img, price, size, quantity, unitSumPrice } = req.body;
-
-    // req.body로 받은 상품 정보들을 product라는 객체 형태의 변수에 저장
-    const product = {
-      productName,
-      productCode,
-      img,
-      price,
-      size,
-      quantity,
-      unitSumPrice,
-    };
 
     jwt.verify(token, JWT_ACCESS_SECRET, async (err, decoded) => {
       if (err) return res.status(401).json({ message: '토큰 오류 및 기한 만료' });
 
       // 토큰 성공시
+      const { productName, productCode, img, price, size, quantity, unitSumPrice } = req.body;
+      // req.body로 받은 상품 정보들을 product라는 객체 형태의 변수에 저장
+      const product = {
+        productName,
+        productCode,
+        img,
+        price,
+        size,
+        quantity,
+        unitSumPrice,
+      };
       const userCart = await Cart.findOne({ user: decoded.id });
       // cart가 생성되어있지 않으면 cart 생성하고 userId와 products 배열에 product 정보 넣어서 DB 저장
       if (!userCart) {

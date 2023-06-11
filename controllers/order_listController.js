@@ -876,9 +876,15 @@ const getAdminOrderListDetail = async (req, res) => {
     const { orderId } = req.params;
     const orderIdInfo = await Order.findOne({ 'payments.orderId': orderId });
 
-    if (!orderIdInfo) return res.status(400).json('해당 주문번호가 없습니다.');
-    // 데이터가 잘 들어왔다면,
-    return res.status(200).json(orderIdInfo);
+    if (!orderIdInfo) {
+      const cancelIdInfo = await Cancel.findOne({ 'payments.orderId': orderId });
+
+      if (!cancelIdInfo) return res.status(404).json('주문번호가 없습니다.');
+      // true이면, 아래 진행
+      res.status(200).json(cancelIdInfo);
+    } else {
+      res.status(200).json(orderIdInfo);
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json('알 수 없는 오류');
