@@ -13,7 +13,6 @@ const getCartInfo = async (req, res) => {
     jwt.verify(req.body.token, JWT_ACCESS_SECRET, async (err, decoded) => {
       // 토큰인증 실패시
       if (err) return res.status(401).json({ message: '토큰 기한 만료' });
-
       // 토큰인증 성공시
       // 유저 카트 정보 불러오기
       const userCart = await Cart.findOne({ user: decoded.id });
