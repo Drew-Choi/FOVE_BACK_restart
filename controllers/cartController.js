@@ -18,37 +18,91 @@ const getCartInfo = async (req, res) => {
       // 유저 카트 정보 불러오기
       const userCart = await Cart.findOne({ user: decoded.id });
 
-      // 사이즈 재고 체크 및 업데이트
-      const productStockCheck = async (cartData) => {
-        const cartSizeValue = cartData.size;
-        const productStock = await Product.findOne({
-          productName: cartData.productName,
-          productCode: cartData.productCode,
-        });
-        // 객체에 변수 키값에 접근하려면 []대괄호로 접근
-        const result = productStock.size[cartSizeValue];
-        return result;
-      };
+      if (userCart.products.length !== 0) {
+        console.log('시작함');
+        // 카트에 데이터가 있다면, 사이즈 재고 검증작업시작
+        // 카트 상품을 하나씩 꺼내서 검증
+        // eslint-disable-next-line no-undef
+        await Promise.all(
+          userCart.products.map(async (el, index) => {
+            // 카트에 저장된 상품의 사이즈 추출
+            const cartSizeValue = el.size;
+            console.log('사이즈초기값: ', cartSizeValue);
+            // 만약 해당 상품의 수량이 음수라면, 이전에 솔드아웃되었던 것이니 재고가 들어왔는지 확인
+            if (el.quantity < 0) {
+              console.log('1번 들어옴');
+              // 재고확인을 위해 상품데이터 불러오기
+              const productStockCheck = await Product.findOne({
+                productName: el.productName,
+                productCode: el.productCode,
+              });
+              // 만약 카트의 상품에 해당하는 제품이 0이 아니라면, 재고가 들어온 것이기 때문에,
+              if (productStockCheck.size[cartSizeValue] !== 0) {
+                console.log('1-1들어옴');
+                // 카트의 해당 상품의 수량을 양수로 전환하여 복원
+                // 이후에 고객이 원하는 수량이 재고량 보다 적은지 체크를 위해 업데이트된 자료를 담아낸다.
+                const updateCartPd = await Cart.findOneAndUpdate(
+                  { user: decoded.id },
+                  { $mul: { [`products.${index}.quantity`]: -1 } },
+                  { new: true },
+                );
+                // 업데이트 된 카트 데이터와 상품 재고 정보랑 수량을 비교,
+                // 카트 데이터의 수량이 상품의 해당 사이즈 재고 보다 초과하다면 문제가 되기 때문에 이 경우에만 다시 한번 수량을 업데이트 해준다.
+                // 초과한다는 것은 현재 상품의 모든 재고량을 포함한다는 의미이므로, 상품의 모든 재고량을 카트에 담아준다.
+                if (
+                  productStockCheck.size[cartSizeValue] !== 0 &&
+                  updateCartPd.products[index].quantity > productStockCheck.size[cartSizeValue]
+                ) {
+                  console.log('1-2들어옴');
+                  await Cart.findOneAndUpdate(
+                    { user: decoded.id },
+                    { $set: { [`products.${index}.quantity`]: productStockCheck.size[cartSizeValue] } },
+                  );
+                }
+                // 만약 카트 수량이 재고수량을 초과하지 않는다면, 그냥 종료
+              }
+              // 만약 상품이 음수가 아니라면, 기존 재고가 있던 것이 카트에 있는 것이므로, 솔드아웃이 되었는지 체크해줘야함
+            } else if (el.quantity > 0) {
+              console.log('2번 들어옴');
+              // 재고 확인을 위해 상품데이터 불러오기
+              const productStockCheck2 = await Product.findOne({
+                productName: el.productName,
+                productCode: el.productCode,
+              });
+              // 0이 아니라면 그냥 종료지만, 만약 0이라면 솔드아웃되었기 때문에 카트 정보를 업데이트 해야함
+              if (productStockCheck2.size[cartSizeValue] === 0) {
+                console.log('2-1번 들어옴');
+                // 0이면 솔드아웃된 것이므로 카트 내 해당 상품의 해당 사이즈의 수량을 음수로 바꿔준다.
+                // 만약 0이 아니라면 아래 else if로 이동해서 재고를 초과하진 않는지 체크
+                await Cart.findOneAndUpdate({ user: decoded.id }, { $mul: { [`products.${index}.quantity`]: -1 } });
+              }
+              // 재고를 초과하지 않는 지 검사, 초과하는 경우라면 다시 한번 cart업데이트
+              if (
+                productStockCheck2.size[cartSizeValue] !== 0 &&
+                el.quantity > productStockCheck2.size[cartSizeValue]
+              ) {
+                console.log('2-2번 들어옴');
+                // 재고를 초과했다면, 모든 재고를 포함한다는 것이므로 해당 상품의 모든 재고를 카트에 업데이트 해준다.
+                await Cart.findOneAndUpdate(
+                  { user: decoded.id },
+                  { $set: { [`products.${index}.quantity`]: productStockCheck2.size[cartSizeValue] } },
+                );
+              }
+              // 이건 여기서 끝,
+            }
+          }),
+        );
 
-      userCart.products.map(async (el, index) => {
-        const result = await productStockCheck(el);
-        if (result === 0) {
-          await Cart.findOneAndUpdate({ user: decoded.id }, { $set: { [`products.${index}.quantity`]: -1 } });
-        }
-      });
-
-      // 업데이트 완료후 다시 카트 불러오기
-      const updatedCart = await Cart.findOne({ user: decoded.id });
-
-      if (!updatedCart.products || updatedCart.products.length === 0) {
-        res.status(404).json('장바구니 정보가 없습니다.');
-      } else {
-        const totalQuantity = updatedCart.products.reduce(
-          (sum, product) => sum + (product.quantity === -1 ? product.quantity + 1 : product.quantity),
+        // 모든 검증이 끝나면 새롭게 업데이트 된 카트데이터 불러오기
+        const updatedCart = await Cart.findOne({ user: decoded.id });
+        const totalQuantity = await updatedCart.products.reduce(
+          (sum, product) => sum + (product.quantity < 0 ? product.quantity - product.quantity : product.quantity),
           0,
         );
         // 상품별 quantity 모두 더하기
-        return res.status(200).json({ products: updatedCart.products, cartQuantity: totalQuantity });
+        res.status(200).json({ products: updatedCart.products, cartQuantity: totalQuantity });
+      } else {
+        res.status(404).json('장바구니가 비어있습니다.');
       }
     });
   } catch (err) {
