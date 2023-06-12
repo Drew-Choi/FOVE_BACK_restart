@@ -1,6 +1,8 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable object-curly-newline */
 const jwt = require('jsonwebtoken');
+
+require('../mongooseConnect');
 const Cart = require('../models/cart');
 const Product = require('../models/product');
 
@@ -13,18 +15,41 @@ const getCartInfo = async (req, res) => {
       if (err) return res.status(401).json({ message: '토큰 기한 만료' });
 
       // 토큰인증 성공시
+      // 유저 카트 정보 불러오기
       const userCart = await Cart.findOne({ user: decoded.id });
-      let totalQuantity = 0;
 
-      if (!userCart.products) {
-        totalQuantity = 0;
+      // 사이즈 재고 체크 및 업데이트
+      const productStockCheck = async (cartData) => {
+        const cartSizeValue = cartData.size;
+        const productStock = await Product.findOne({
+          productName: cartData.productName,
+          productCode: cartData.productCode,
+        });
+        // 객체에 변수 키값에 접근하려면 []대괄호로 접근
+        const result = productStock.size[cartSizeValue];
+        return result;
+      };
+
+      userCart.products.map(async (el, index) => {
+        const result = await productStockCheck(el);
+        if (result === 0) {
+          await Cart.findOneAndUpdate({ user: decoded.id }, { $set: { [`products.${index}.quantity`]: -1 } });
+        }
+      });
+
+      // 업데이트 완료후 다시 카트 불러오기
+      const updatedCart = await Cart.findOne({ user: decoded.id });
+
+      if (!updatedCart.products || updatedCart.products.length === 0) {
+        res.status(404).json('장바구니 정보가 없습니다.');
       } else {
-        totalQuantity = userCart.products.reduce((sum, product) => sum + product.quantity, 0);
-      } // 상품별 quantity 모두 더하기
-
-      if (!userCart || userCart.length === 0) return res.status(404).json('장바구니 정보가 없습니다.');
-
-      return res.status(200).json({ products: userCart.products, cartQuantity: totalQuantity });
+        const totalQuantity = updatedCart.products.reduce(
+          (sum, product) => sum + (product.quantity === -1 ? product.quantity + 1 : product.quantity),
+          0,
+        );
+        // 상품별 quantity 모두 더하기
+        return res.status(200).json({ products: updatedCart.products, cartQuantity: totalQuantity });
+      }
     });
   } catch (err) {
     console.error(err);
@@ -74,15 +99,6 @@ const addProductToCart = async (req, res) => {
         return;
       }
 
-      // cart는 생성 돼있는데 products 배열이 없거나 products 배열에 담긴 product가 없을 때
-      // if (!userCart.products || !userCart.products.length) {
-      //   userCart.products = [product];
-      //   await userCart.save();
-      //   res.status(200).json('장바구니 담기 성공2');
-      //   return; // 다음 코드 실행 안되게
-      // }
-
-      // 장바구니에 상품이 있으면 추가하려는 상품과 동일한 옴션의 상품이 있는지 확인 후 sameProduct 배열에 저장
       const sameProduct = userCart.products.find(
         (productEl) => productName === productEl.productName && size === productEl.size,
       );
