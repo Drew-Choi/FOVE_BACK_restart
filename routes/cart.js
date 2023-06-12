@@ -16,15 +16,15 @@ router.post('/list', getCartInfo); // 장바구니 정보 불러오기(장바구
 router.post('/add', addProductToCart);
 
 // 장바구니 상품 하나 삭제 /cart/remove/"상품고유코드" + body.token
-router.post('/remove/:productCode', removeCartItem);
+router.post('/remove', removeCartItem);
 
 // 장바구니 비우기 /cart/clean + body.token
 router.post('/clean', cleanCart);
 
 // 장바구니 상품 수량 증가 + 1 /cart/qtyplus/"상품고유코드" + body.token
-router.post('/qtyplus/:productCode', cartProductQtyPlus);
+router.post('/qtyplus', cartProductQtyPlus);
 
 // 장바구니 상품 수량 감소 - 1 /cart/qtyminus/"상품고유코드" + body.token
-router.post('/qtyminus/:productCode', cartProductQtyMinus);
+router.post('/qtyminus', cartProductQtyMinus);
 
 module.exports = router;
