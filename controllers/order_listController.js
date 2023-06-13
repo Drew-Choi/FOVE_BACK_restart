@@ -18,18 +18,6 @@ const changeTimetoNum = (time) => {
   return koreanTime;
 };
 
-const changeTimetoNum2 = (timeString) => {
-  // eslint-disable-next-line no-param-reassign
-  timeString = timeString.slice(0, -6);
-  const utcTime = new Date(timeString);
-  // 한국 시차 9시간 더하기
-  utcTime.setHours(utcTime.getHours() + 9);
-
-  const result = utcTime.getTime();
-
-  return result;
-};
-
 // 개별 상품들 한진배송 체크_클라이언트
 const individualCheck = async (arr, decodedId) => {
   arr.map(async (el) => {
@@ -622,9 +610,8 @@ const getAdminDONEList = async (req, res) => {
     // oderListInfo에 모든 정보가 잘 들어오면,
     // 날짜순으로 확실히 정렬 내림차순
     const array = getDoneListArr.sort(
-      (a, b) => changeTimetoNum2(b.payments.approvedAt) - changeTimetoNum2(a.payments.approvedAt),
+      (a, b) => changeTimetoNum(a.payments.approvedAt) - changeTimetoNum(b.payments.approvedAt),
     );
-    console.log(changeTimetoNum2(getDoneListArr[0].payments.approvedAt));
     res.status(200).json(array);
   } catch (err) {
     console.error(err);
