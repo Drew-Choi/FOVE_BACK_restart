@@ -4,48 +4,79 @@ const jwt = require('jsonwebtoken');
 require('../mongooseConnect');
 const Order = require('../models/order');
 const Cancel = require('../models/cancel');
+const Product = require('../models/product');
 
 const { JWT_ACCESS_SECRET } = process.env;
 
 // toss쿼리문 받기
 const tossApprove = async (req, res) => {
   try {
-    const { amount } = req.query;
-    const { orderId } = req.query;
-    const { paymentKey } = req.query;
-    const { orderPrice } = req.query;
-
-    if (orderPrice === amount) {
-      // 토스 인증을 위한 키
-      const { SECRET_KEY } = process.env;
-      const encoder = await new TextEncoder();
-      // eslint-disable-next-line prefer-template
-      const utf8Array = await encoder.encode(SECRET_KEY + ':');
-      const encode = await btoa(String.fromCharCode.apply(null, utf8Array));
-
-      const response = await axios.post(
-        'https://api.tosspayments.com/v1/payments/confirm',
-        {
-          amount,
-          orderId,
-          paymentKey,
-        },
-        {
-          headers: {
-            Authorization: `Basic ${encode}`,
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      // eslint-disable-next-line no-unused-expressions
-      if (response.status === 200) {
-        req.session.cashData = await response.data;
-        res.status(200).redirect('http://localhost:3000/store/order_success');
-      } else {
-        res.status(401).json('인가실패');
+    // 결제전 마지막 재고 체크
+    const { products } = await req.query;
+    console.log('프론트에서 넘어오는 JSON데이터: ', products);
+    // JSON을 배열자료형으로 변환
+    const productArr = await JSON.parse(products);
+    console.log('parse데이터: ', productArr);
+    // 배열의 요소들을 순회하면서 재고체크하기 만약 주문수량이 재고량을 초과한다면 오류를 내서 결제를 막는다.
+    // 순회작업
+    const exceededItem = productArr.map(async (el) => {
+      const sizeValue = el.size;
+      const productInfo = await Product.findOne({ productName: el.productName, productCode: el.productCode });
+      if (productInfo.size[sizeValue] < el.quantity) {
+        return el;
       }
+    });
+    // 모든 프로미스가 완되는 순간까지 기다리기 위한 Promise.all
+    // eslint-disable-next-line no-undef
+    const exceededItemFilter = (await Promise.all(exceededItem)).filter(Boolean);
+    console.log('초과상품목록: ', exceededItemFilter);
+    console.log('초과상품목록 길이: ', exceededItemFilter.length);
+
+    if (exceededItemFilter.length !== 0) {
+      console.log('상품 재고 없음 중지');
+      res
+        .status(400)
+        .json({ message: '재고가 없거나 부족한 상품이 발생해 결제를 중단합니다.', exceededData: exceededItemFilter });
     } else {
-      res.status(403).json('금액오류 인증실패');
+      // exceededItemFilter의 값이 빈 배열이라면, 재고량 초과하는게 없으니 아래 진행
+      console.log('모든재고 있음으로 넘어감');
+      const { amount } = req.query;
+      const { orderId } = req.query;
+      const { paymentKey } = req.query;
+      const { orderPrice } = req.query;
+
+      if (orderPrice === amount) {
+        // 토스 인증을 위한 키
+        const { SECRET_KEY } = process.env;
+        const encoder = await new TextEncoder();
+        // eslint-disable-next-line prefer-template
+        const utf8Array = await encoder.encode(SECRET_KEY + ':');
+        const encode = await btoa(String.fromCharCode.apply(null, utf8Array));
+
+        const response = await axios.post(
+          'https://api.tosspayments.com/v1/payments/confirm',
+          {
+            amount,
+            orderId,
+            paymentKey,
+          },
+          {
+            headers: {
+              Authorization: `Basic ${encode}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        );
+        // eslint-disable-next-line no-unused-expressions
+        if (response.status === 200) {
+          req.session.cashData = await response.data;
+          res.status(200).redirect('http://localhost:3000/store/order_success');
+        } else {
+          res.status(401).json('인가실패');
+        }
+      } else {
+        res.status(403).json('금액오류 인증실패');
+      }
     }
   } catch (err) {
     console.error(err);
