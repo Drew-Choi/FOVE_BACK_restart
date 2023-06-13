@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const Order = require('../models/order');
+const Product = require('../models/product');
 
 const filterUniqueCode = (time) => {
   const uniqueKey = time.replace(/[-T:]/g, '').replace(/\+.*/, '');
@@ -46,6 +47,8 @@ const addOrder = async (req, res) => {
         message,
       };
 
+      console.log('주문상품목록 초기: ', products);
+
       if (order.length === 0) {
         const newPayments = {
           status,
@@ -63,6 +66,16 @@ const addOrder = async (req, res) => {
           products,
         };
         await Order.create(newOrder);
+
+        // 재고처리
+        await products.forEach(async (el) => {
+          const sizeValue = el.size;
+          await Product.findOneAndUpdate(
+            { productCode: el.productCode, productName: el.productName },
+            { $inc: { [`size.${sizeValue}`]: -el.quantity } },
+          );
+        });
+
         res.status(200).json({ message: '주문성공' });
       } else {
         const newPayments = {
@@ -81,6 +94,16 @@ const addOrder = async (req, res) => {
           products,
         };
         await Order.create(newOrder);
+
+        // 재고처리
+        await products.forEach(async (el) => {
+          const sizeValue = el.size;
+          await Product.findOneAndUpdate(
+            { productCode: el.productCode, productName: el.productName },
+            { $inc: { [`size.${sizeValue}`]: -el.quantity } },
+          );
+        });
+
         res.status(200).json({ message: '주문성공' });
       }
     });
