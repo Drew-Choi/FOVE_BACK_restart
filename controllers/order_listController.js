@@ -803,6 +803,7 @@ const registerShippingCodeRetrieved = async (req, res) => {
           $set: {
             isShipping: true,
             shippingCode: newShippingCode,
+            shippingAt: koreanTime(),
           },
         },
         {
@@ -863,6 +864,7 @@ const registerShippingCodeReturn = async (req, res) => {
           $set: {
             isShipping: true,
             shippingCode: newShippingCode,
+            shippingAt: koreanTime(),
           },
         },
         {
@@ -997,6 +999,7 @@ const reqAdminShippingCondition = async (req, res) => {
             'payments.status': 'DONE',
             isShipping: true,
             shippingCode: code,
+            shippingAt: koreanTime(),
             isDelivered: false,
             isCancel: false,
             isReturn: false,
@@ -1067,6 +1070,7 @@ const reqAdminChangeCondition = async (req, res) => {
             'payments.status': 'DONE',
             isShipping: true,
             shippingCode: code,
+            shippingAt: koreanTime(),
             isDelivered: true,
             isCancel: false,
             isReturn: true,
@@ -1083,6 +1087,7 @@ const reqAdminChangeCondition = async (req, res) => {
             'payments.status': 'DONE',
             isShipping: true,
             shippingCode: code,
+            shippingAt: koreanTime(),
             isDelivered: false,
             isCancel: false,
             isReturn: true,
@@ -1164,6 +1169,7 @@ const reqAdminSubmitReturnCondition = async (req, res) => {
             'payments.status': 'DONE',
             isShipping: true,
             shippingCode: code,
+            shippingAt: koreanTime(),
             isDelivered: true,
             isCancel: false,
             isReturn: false,
