@@ -18,6 +18,15 @@ const changeTimetoNum = (time) => {
   return koreanTime;
 };
 
+// UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
+const koreanTime = () => {
+  const now = new Date();
+  const koreanOffset = 9 * 60;
+  const offsetMillisec = koreanOffset * 60 * 1000;
+  const koreaTime = new Date(now.getTime() + offsetMillisec);
+  return koreaTime;
+};
+
 // 개별 상품들 한진배송 체크_클라이언트
 const individualCheck = async (arr, decodedId) => {
   arr.map(async (el) => {
@@ -723,6 +732,7 @@ const registerShippingCode = async (req, res) => {
           $set: {
             isShipping: true,
             shippingCode,
+            shippingAt: koreanTime(),
           },
         },
         {

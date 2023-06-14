@@ -50,6 +50,9 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  shippingAt: {
+    type: Date,
+  },
   isDelivered: {
     // 배송완료
     type: Boolean,

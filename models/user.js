@@ -3,18 +3,12 @@ const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
 // UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
-const nowDayTime = () => {
-  const curTime = new Date();
-
-  // utc기준 시간 세팅
-  const utc = curTime.getTime() + curTime.getTimezoneOffset() * 60 * 1000;
-
-  // 9시간 더하기
-  const kstTimeStamp = 9 * 60 * 60 * 1000;
-  // 9시간 더한 밀리세컨드를 Date로 생성
-  const kstData = new Date(utc + kstTimeStamp);
-
-  return kstData;
+const koreanTime = () => {
+  const now = new Date();
+  const koreanOffset = 9 * 60;
+  const offsetMillisec = koreanOffset * 60 * 1000;
+  const koreaTime = new Date(now.getTime() + offsetMillisec);
+  return koreaTime;
 };
 
 const userSchema = new Schema(
@@ -39,7 +33,7 @@ const userSchema = new Schema(
       },
     ],
     points: { type: Number, default: 0 }, // 포인트
-    createAt: { type: Date, default: nowDayTime() }, // 가입일
+    createAt: { type: Date, default: koreanTime() }, // 가입일
     isActive: { type: Boolean, default: true }, // 활동 상태 여부(회원/탈퇴)
     isAdmin: { type: Boolean, default: false }, // 관리자 여부
     // cartId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // 장바구니 코드
