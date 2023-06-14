@@ -4,11 +4,15 @@ const { Schema } = mongoose;
 
 // UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
 const nowDayTime = () => {
-  const utcTimeNow = Date.now();
+  const curTime = new Date();
+
+  // utc기준 시간 세팅
+  const utc = curTime.getTime() + curTime.getTimezoneOffset() * 60 * 1000;
+
   // 9시간 더하기
-  const kstTimeStamp = utcTimeNow + 9 * 60 * 60 * 1000;
+  const kstTimeStamp = 9 * 60 * 60 * 1000;
   // 9시간 더한 밀리세컨드를 Date로 생성
-  const kstData = new Date(kstTimeStamp);
+  const kstData = new Date(utc + kstTimeStamp);
 
   return kstData;
 };
