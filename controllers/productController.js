@@ -75,7 +75,7 @@ const getNewProducts = async (req, res) => {
   try {
     // 현재 날짜에서 7일 분량 빼기(24시간 * 60분 * 60초 * 1000밀리초)
     // const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12시간 내
+    const twelveHoursAgo = new Date(Date.now() - 24 * 7 * 60 * 60 * 1000); // 12시간 내
     const products = await Product.find({ createAt: { $gte: twelveHoursAgo } }); // gte: '크거나 같음' 연산자
     res.status(200).json(products);
   } catch (err) {

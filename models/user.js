@@ -23,12 +23,12 @@ const userSchema = new Schema(
     profile_Image: { type: String }, // 카카오프로파일이미지
     addresses: [
       {
-        destination: { type: String }, // 배송지명
         recipient: { type: String }, // 수령인 이름
         address: { type: String }, // 주소
         addressDetail: { type: String }, // 상세주소
         zipCode: { type: String }, // 우편번호
         recipientPhone: { type: String }, // 수령인 번호. 프론트에서 하나로 합칠 예정
+        message_ad: { type: String, default: '' },
         isDefault: { type: Boolean, default: false }, // 기본 주소 여부
       },
     ],

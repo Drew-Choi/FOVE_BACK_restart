@@ -70,12 +70,12 @@ const kakaoCallBack = async (req, res) => {
         profile_Image: kakaoUserInfo.data.kakao_account.profile.profile_image_url,
         addresses: [
           {
-            destination: nickname,
             recipient: nickname,
             address: '',
             addressDetail: '',
             zipCode: '',
             recipientPhone: '',
+            message_ad: '',
             isDefault: true,
           },
         ],
