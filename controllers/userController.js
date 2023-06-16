@@ -67,10 +67,8 @@ const deleteAddress = async (req, res) => {
     await myData.save();
 
     res.status(200).json({ message: '배송지지주소 삭제 성공!', myAddresses });
-    console.log(myData);
   } catch (err) {
     console.error(err);
-    console.log('에러 발생(서버 문제)');
   }
 };
 
