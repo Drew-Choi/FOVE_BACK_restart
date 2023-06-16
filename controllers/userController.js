@@ -19,8 +19,12 @@ const addAddress = async (req, res) => {
 
       // 토큰 인증 성공시 아래
       const { newAddress } = req.body;
-      await User.findOneAndUpdate({ id: decoded.id }, { $set: { 'addresses.0': newAddress } });
-      res.status(200).json('업데이트성공');
+      const updateData = await User.findOneAndUpdate(
+        { id: decoded.id },
+        { $set: { 'addresses.0': newAddress } },
+        { new: true },
+      );
+      res.status(200).json(updateData.addresses[0]);
     });
   } catch (err) {
     console.error(err);
