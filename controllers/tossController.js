@@ -78,7 +78,8 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    if (req.session.cashData) return res.status(200).json(req.session.cashData);
+    const sessionData = await req.session.cashData;
+    if (sessionData) return res.status(200).json(sessionData);
     return res.status(401).json({ message: '인가실패로 데이터가 없음' });
   } catch (err) {
     console.error(err);
