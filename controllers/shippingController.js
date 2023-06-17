@@ -51,7 +51,6 @@ const searchCJ = async (req, res) => {
         coreInfoArr.push(core);
       });
       // -----------------------
-      console.log(coreInfoArr);
 
       // 집화처리 체크
       const arrCheck = (arr) => {
@@ -109,8 +108,6 @@ const searchHANJIN = async (req, res) => {
         'payments.status': 'DONE',
       });
 
-      console.log(getOrderedListArr);
-
       if (!getOrderedListArr) {
         res.status(404).json({ message: '주문데이터를 db에서 찾을 수 없음' });
       } else {
@@ -129,10 +126,9 @@ const searchHANJIN = async (req, res) => {
             // 운송장 번호 확인 & 상품접수(배송중) & 배송완료, 여기서 자동을 바뀜
             const trackingNumber = $('p[class="comm-sec"]').text().trim();
             // trackingNumber.includes('배송완료')가 false 이면 바로 종료
-            if (!trackingNumber.includes('배송완료')) return console.log('안돼!!!!!!!');
+            if (!trackingNumber.includes('배송완료')) return;
 
             // trackingNumber.includes('배송완료')가 true이면 아래 작업 진행
-            console.log('여기로 하나 진행되야함');
             await Order.findOneAndUpdate(
               { user: decoded.id, 'payments.orderId': el.payments.orderId, shippingCode: el.shippingCode },
               { isShipping: false, isDelivered: true },

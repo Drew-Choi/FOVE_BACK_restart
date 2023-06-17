@@ -47,8 +47,6 @@ const addOrder = async (req, res) => {
         message,
       };
 
-      console.log('주문상품목록 초기: ', products);
-
       if (order.length === 0) {
         const newPayments = {
           status,
