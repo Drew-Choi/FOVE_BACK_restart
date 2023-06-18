@@ -98,7 +98,6 @@ app.get('/dott', async (req, res) => {
 // 로그인 유지 미들웨어
 app.post('/islogin', (req, res) => {
   try {
-    console.log('진입');
     const { JWT_ACCESS_SECRET } = process.env;
     jwt.verify(req.body.token, JWT_ACCESS_SECRET, async (err, decoded) => {
       if (err) return res.status(401).json({ message: '토큰 기한 만료. 로그아웃.' });
