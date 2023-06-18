@@ -64,7 +64,6 @@ const tossApprove = async (req, res) => {
         // eslint-disable-next-line no-unused-expressions
         if (response.status === 200) {
           req.session.cashData = await response.data;
-          console.log('세션 저장 :', req.session.cashData);
           res.redirect('http://localhost:3000/store/order_success');
         } else {
           res.status(401).json('인가실패');
@@ -81,20 +80,10 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    const sessionId = await req.session;
-    console.log(sessionId);
-    res.status(200).json(sessionId);
-
-    // const sessionInfo = await Session.findOne({ _id: sessionId });
-    // console.log('데이터 잘 들어오니? :', sessionInfo);
-    // if (!sessionInfo) {
-    //   res.status(404).json('데이터없음');
-    // } else {
-    //   const sessionParse = JSON.parse(sessionInfo.session);
-    //   const { cashData } = sessionParse;
-    //   console.log('이거 찍히면 데이터 잘 들어오는건데(캐쉬데이타):', cashData);
-    //   res.status(200).json(cashData);
-    // }
+    const cookieInfo = await req.cookies.cashData;
+    console.log(cookieInfo);
+    if (!cookieInfo) return res.status(404).json('세션 없음');
+    return res.status(200).json(cookieInfo);
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
