@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
+const MongoStore = require('connect-mongo')(session);
+const connect = require('./mongooseConnect');
 
 // 익스프레스 열기
 const app = express();
@@ -58,6 +60,7 @@ app.use(cookieParser());
 app.use(
   session({
     secret: process.env.SESSION_KEY,
+    store: new MongoStore({ mongooseConnection: connect.connection }),
     resave: false,
     saveUninitialized: true,
     cookie: {
