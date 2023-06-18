@@ -3,8 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const session = require('express-session');
-const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 
 // 익스프레스 열기
@@ -16,24 +14,6 @@ const User = require('./models/user');
 
 // 포트설정
 const { PORT } = process.env;
-
-// 세션설정
-app.use(
-  session({
-    secret: process.env.SESSION_KEY,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      maxAge: 200000,
-      httpOnly: true,
-    },
-    store: new MongoStore({
-      mongoUrl: process.env.MDB_URI_FOVE,
-      collectionName: 'sessions',
-      ttl: 200000,
-    }),
-  }),
-);
 
 // CORS 허용포트 설정
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
