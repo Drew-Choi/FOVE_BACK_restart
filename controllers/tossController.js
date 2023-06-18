@@ -84,14 +84,13 @@ const paymentData = async (req, res) => {
     const sessionId = req.session.id;
 
     const sessionInfo = await Session.findOne({ _id: sessionId });
-    if (sessionInfo) {
-      const parse = JSON.parse(sessionInfo.session);
-      const { cashData } = parse;
-      console.log('원본데이터 :', cashData);
-      res.status(200).json(cashData);
-    } else {
-      res.status(404).json('세션 없음');
-    }
+
+    if (!sessionInfo.session) return res.status(404).json('세션 없음');
+
+    const parse = JSON.parse(sessionInfo.session);
+    const { cashData } = parse;
+    console.log('원본데이터 :', cashData);
+    res.status(200).json(cashData);
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
