@@ -7,6 +7,7 @@ require('../mongooseConnect');
 const Order = require('../models/order');
 const Cancel = require('../models/cancel');
 const Product = require('../models/product');
+const Session = require('../models/session');
 
 const { JWT_ACCESS_SECRET } = process.env;
 
@@ -83,11 +84,11 @@ const paymentData = async (req, res) => {
   try {
     const sessionId = req.session.id;
 
-    SessionModel.findById(sessionId, (err, session) => {
+    await Session.findById(sessionId, (err, session) => {
       if (err) return res.status(404).json('세션 없음');
       // 아니라면,
       if (session) {
-        const cookieData = session.cookie.data;
+        const cookieData = session.cookie;
         console.log('세션 데이터 :', cookieData);
         res.status(200).json(cookieData);
       } else {
