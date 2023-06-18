@@ -62,6 +62,8 @@ const tossApprove = async (req, res) => {
         // eslint-disable-next-line no-unused-expressions
         if (response.status === 200) {
           req.session.cashData = await response.data;
+          console.log('토스에서 주는 데이터 :', response.data);
+          console.log('토스 인가 후 세션담기 :', req.session.cashData);
           res.status(200).redirect('http://localhost:3000/store/order_success');
         } else {
           res.status(401).json('인가실패');
@@ -78,7 +80,9 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
+    console.log('세션데이터 꺼내기 :', req.session.cashData);
     const sessionData = await req.session.cashData;
+    console.log('변수담기 :', sessionData);
     if (sessionData) return res.status(200).json(sessionData);
     return res.status(401).json({ message: '인가실패로 데이터가 없음' });
   } catch (err) {
