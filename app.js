@@ -24,6 +24,15 @@ app.use(
 );
 
 // 특정 미들웨어에 세션 통신을 위한 허용
+app.use('/toss/approve', (req, res, next) => {
+  // CORS 설정
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 app.use('/toss/data', (req, res, next) => {
   // CORS 설정
   res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
