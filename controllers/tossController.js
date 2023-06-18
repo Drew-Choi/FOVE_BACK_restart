@@ -79,17 +79,15 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    const sessionData = req.session;
-    console.log('sessionData: ', sessionData);
+    console.log(req.cookies);
 
-    if (!sessionData) {
-      return res.status(404).json('세션없음');
-    }
+    // 세션 데이터
+    console.log(req.session);
 
-    const { cashData } = sessionData;
-    console.log('캐쉬데이터: ', cashData);
+    // 세션 데이터의 cashData 접근
+    console.log(req.session.cashData);
 
-    return res.status(200).json(cashData);
+    return res.status(200).json('성공');
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
