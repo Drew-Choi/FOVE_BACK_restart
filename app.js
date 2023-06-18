@@ -62,13 +62,13 @@ app.use(
     resave: true,
     saveUninitialized: true,
     cookie: {
-      maxAge: 20000,
+      maxAge: 200000,
       httpOnly: true,
     },
     store: new MongoStore({
       mongoUrl: process.env.MDB_URI_FOVE,
       collectionName: 'sessions',
-      ttl: 20000,
+      ttl: 200000,
     }),
   }),
 );
