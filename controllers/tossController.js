@@ -84,9 +84,6 @@ const paymentData = async (req, res) => {
     const sessionId = req.session.id;
 
     const sessionInfo = await Session.findOne({ _id: sessionId });
-
-    if (!sessionInfo) return res.status(404).json('세션 없음');
-
     const parse = JSON.parse(sessionInfo.session);
     const { cashData } = parse;
     console.log('원본데이터 :', cashData);
