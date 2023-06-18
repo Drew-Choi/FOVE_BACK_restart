@@ -80,8 +80,8 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    const cookieInfo = await req.cookies.cashData;
-    console.log(cookieInfo);
+    console.log('쿠키데이터 :', req.cookies);
+    const cookieInfo = await req.cookies;
     if (!cookieInfo) return res.status(404).json('세션 없음');
     return res.status(200).json(cookieInfo);
   } catch (err) {
