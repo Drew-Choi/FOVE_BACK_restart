@@ -1,6 +1,8 @@
 /* eslint-disable object-curly-newline */
 const { default: axios } = require('axios');
 const jwt = require('jsonwebtoken');
+const SessionModel = require('express-session').Session;
+
 require('../mongooseConnect');
 const Order = require('../models/order');
 const Cancel = require('../models/cancel');
@@ -79,19 +81,22 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    console.log('세션아이디', req.session.id);
-    console.log('세션', req.session.cashData);
-    const sessionsCollection = req.sessionStore.collection;
-    const sessionData = await sessionsCollection.findOne({ _id: req.session.id });
-    if (sessionData) {
-      console.log('세션 데이터 :', sessionData.cashData);
-      const { cashData } = sessionData;
-      return res.status(200).json(cashData);
-    }
-    return res.status(401).json({ message: '인가실패로 데이터가 없음' });
+    const sessionId = req.session.id;
+
+    SessionModel.findById(sessionId, (err, session) => {
+      if (err) return res.status(404).json('세션 없음');
+      // 아니라면,
+      if (session) {
+        const cookieData = session.cookie.data;
+        console.log('세션 데이터 :', cookieData);
+        res.status(200).json(cookieData);
+      } else {
+        res.status(400).json('세션데이타 접근 오류');
+      }
+    });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: '알 수 없는 오류' });
+    return res.status(500).json('알 수 없는 오류');
   }
 };
 
