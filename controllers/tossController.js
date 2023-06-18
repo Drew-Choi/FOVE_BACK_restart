@@ -29,7 +29,7 @@ const tossApprove = async (req, res) => {
     const exceededItemFilter = (await Promise.all(exceededItem)).filter(Boolean);
 
     if (exceededItemFilter.length !== 0) {
-      res.status(400).redirect('http://localhost:3000/store/order/checkout/fail');
+      res.redirect('http://localhost:3000/store/order/checkout/fail');
     } else {
       // exceededItemFilter의 값이 빈 배열이라면, 재고량 초과하는게 없으니 아래 진행
       const { amount } = req.query;
@@ -61,10 +61,10 @@ const tossApprove = async (req, res) => {
         );
         // eslint-disable-next-line no-unused-expressions
         if (response.status === 200) {
-          req.session.cashData = await response.data;
+          req.session.cashData = response.data;
           console.log('토스에서 주는 데이터 :', response.data);
           console.log('토스 인가 후 세션담기 :', req.session.cashData);
-          res.status(200).redirect('http://localhost:3000/store/order_success');
+          res.redirect('http://localhost:3000/store/order_success');
         } else {
           res.status(401).json('인가실패');
         }
@@ -74,7 +74,7 @@ const tossApprove = async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500);
+    return res.status(500).json({ message: '알 수 없는 오류' });
   }
 };
 
@@ -87,7 +87,7 @@ const paymentData = async (req, res) => {
     return res.status(401).json({ message: '인가실패로 데이터가 없음' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: '알 수 없는 오류' });
+    return res.status(500).json({ message: '알 수 없는 오류' });
   }
 };
 

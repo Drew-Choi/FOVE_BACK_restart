@@ -3,7 +3,7 @@ const { tossApprove, paymentData, tossCancel } = require('../controllers/tossCon
 
 router.get('/approve', tossApprove);
 
-router.get('/data', paymentData);
+router.post('/data', paymentData);
 
 router.post('/cancel', tossCancel);
 
