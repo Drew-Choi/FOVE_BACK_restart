@@ -81,18 +81,20 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    const sessionId = await req.session.id;
+    const sessionId = await req.session;
+    console.log(sessionId);
+    res.status(200).json(sessionId);
 
-    const sessionInfo = await Session.findOne({ _id: sessionId });
-    console.log('데이터 잘 들어오니? :', sessionInfo);
-    if (!sessionInfo) {
-      res.status(404).json('데이터없음');
-    } else {
-      const sessionParse = JSON.parse(sessionInfo.session);
-      const { cashData } = sessionParse;
-      console.log('이거 찍히면 데이터 잘 들어오는건데(캐쉬데이타):', cashData);
-      res.status(200).json(cashData);
-    }
+    // const sessionInfo = await Session.findOne({ _id: sessionId });
+    // console.log('데이터 잘 들어오니? :', sessionInfo);
+    // if (!sessionInfo) {
+    //   res.status(404).json('데이터없음');
+    // } else {
+    //   const sessionParse = JSON.parse(sessionInfo.session);
+    //   const { cashData } = sessionParse;
+    //   console.log('이거 찍히면 데이터 잘 들어오는건데(캐쉬데이타):', cashData);
+    //   res.status(200).json(cashData);
+    // }
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
