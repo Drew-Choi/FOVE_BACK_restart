@@ -83,11 +83,13 @@ const paymentData = async (req, res) => {
   try {
     const sessionId = req.session.id;
 
-    const session = await Session.findOne({ _id: sessionId });
-    if (session) {
-      console.log('db데이터 :', session);
-      const cookieData = session.cookie;
-      console.log('세션 데이터 :', cookieData);
+    const sessionInfo = await Session.findOne({ _id: sessionId });
+    if (sessionInfo) {
+      console.log('db데이터 :', sessionInfo);
+      const parse = JSON.parse(sessionInfo.session);
+      console.log('파스데이터 :', parse);
+      const cookieData = parse.cookie;
+      console.log('쿠키데이터 :', cookieData);
       res.status(200).json(cookieData);
     } else {
       res.status(404).json('세션 없음');
