@@ -6,7 +6,6 @@ require('../mongooseConnect');
 const Order = require('../models/order');
 const Cancel = require('../models/cancel');
 const Product = require('../models/product');
-const Session = require('../models/session');
 
 const { JWT_ACCESS_SECRET } = process.env;
 

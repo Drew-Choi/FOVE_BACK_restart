@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
-const cookieParser = require('cookie-parser');
 
 // 익스프레스 열기
 const app = express();
@@ -49,9 +48,6 @@ app.use('/shipping/search', (req, res, next) => {
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// 쿠키파서 설정
-app.use(cookieParser());
 
 // ------------------- 라우터 -------------------
 const cartRouter = require('./routes/cart');
