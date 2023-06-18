@@ -17,11 +17,7 @@ const User = require('./models/user');
 const { PORT } = process.env;
 
 // CORS 허용포트 설정
-app.use(
-  cors({
-    origin: 'http://localhost:3000',
-  }),
-);
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 
 // 특정 미들웨어에 세션 통신을 위한 허용
 app.use('/toss/approve', (req, res, next) => {
