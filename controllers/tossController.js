@@ -1,7 +1,6 @@
 /* eslint-disable object-curly-newline */
 const { default: axios } = require('axios');
 const jwt = require('jsonwebtoken');
-const SessionModel = require('express-session').Session;
 
 require('../mongooseConnect');
 const Order = require('../models/order');
@@ -84,7 +83,7 @@ const paymentData = async (req, res) => {
   try {
     const sessionId = req.session.id;
 
-    const session = await Session.findById(sessionId);
+    const session = await Session.findOne({ _id: sessionId });
     if (session) {
       console.log('db데이터 :', session);
       const cookieData = session.cookie;
