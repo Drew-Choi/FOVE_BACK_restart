@@ -84,17 +84,15 @@ const paymentData = async (req, res) => {
   try {
     const sessionId = req.session.id;
 
-    await Session.findById(sessionId, (err, session) => {
-      if (err) return res.status(404).json('세션 없음');
-      // 아니라면,
-      if (session) {
-        const cookieData = session.cookie;
-        console.log('세션 데이터 :', cookieData);
-        res.status(200).json(cookieData);
-      } else {
-        res.status(400).json('세션데이타 접근 오류');
-      }
-    });
+    const session = await Session.findById(sessionId);
+    if (session) {
+      console.log('db데이터 :', session);
+      const cookieData = session.cookie;
+      console.log('세션 데이터 :', cookieData);
+      res.status(200).json(cookieData);
+    } else {
+      res.status(404).json('세션 없음');
+    }
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
