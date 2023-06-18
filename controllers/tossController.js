@@ -79,10 +79,11 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
+    console.log('세션아이디', req.session.id);
     const sessionsCollection = req.sessionStore.collection;
     const sessionData = await sessionsCollection.findOne({ _id: req.session.id });
-    console.log('세션 데이터 :', sessionData.cashData);
     if (sessionData) {
+      console.log('세션 데이터 :', sessionData.cashData);
       const { cashData } = sessionData;
       return res.status(200).json(cashData);
     }
