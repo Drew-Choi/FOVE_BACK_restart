@@ -84,10 +84,15 @@ const paymentData = async (req, res) => {
     const sessionId = await req.session.id;
 
     const sessionInfo = await Session.findOne({ _id: sessionId });
-    const parse = await JSON.parse(sessionInfo.session);
-    const { cashData } = parse;
-    console.log('원본데이터 :', cashData);
-    res.status(200).json(cashData);
+    console.log('데이터 잘 들어오니? :', sessionInfo);
+    if (!sessionInfo) {
+      res.status(404).json('데이터없음');
+    } else {
+      const sessionParse = JSON.parse(sessionInfo.session);
+      const { cashData } = sessionParse;
+      console.log('이거 찍히면 데이터 잘 들어오는건데(캐쉬데이타):', cashData);
+      res.status(200).json(cashData);
+    }
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
