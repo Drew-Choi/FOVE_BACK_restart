@@ -11,13 +11,13 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    maxAge: 200000,
+    maxAge: 5000,
     httpOnly: true,
   },
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
     collectionName: 'sessions',
-    ttl: 200000,
+    ttl: 5000,
   }),
 });
 
