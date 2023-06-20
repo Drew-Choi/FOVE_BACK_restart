@@ -8,6 +8,15 @@ require('../mongooseConnect');
 const User = require('../models/user');
 const Cart = require('../models/cart');
 
+// UTC기준 시간을 한국 시간으로 바꾸기 시차 9시간
+const koreanTime = () => {
+  const now = new Date();
+  const koreanOffset = 9 * 60;
+  const offsetMillisec = koreanOffset * 60 * 1000;
+  const koreaTime = new Date(now.getTime() + offsetMillisec);
+  return koreaTime;
+};
+
 const kakaoCallBack = async (req, res) => {
   try {
     const { code } = await req.query;
@@ -50,7 +59,7 @@ const kakaoCallBack = async (req, res) => {
           id: kakaoId,
         },
         JWT_ACCESS_SECRET,
-        { expiresIn: '1h' },
+        { expiresIn: '2h' },
       );
       const redirectURL = process.env.REDIRECT_URI;
       const data = { key: accessToken };
@@ -79,6 +88,10 @@ const kakaoCallBack = async (req, res) => {
             isDefault: true,
           },
         ],
+        points: 0, // 포인트
+        createAt: koreanTime(), // 가입일
+        isActive: true, // 활동 상태 여부(회원/탈퇴)
+        isAdmin: false, // 관리자 여부
       };
       const newCart = {
         user: kakaoId,
@@ -91,7 +104,7 @@ const kakaoCallBack = async (req, res) => {
           id: kakaoId,
         },
         JWT_ACCESS_SECRET,
-        { expiresIn: '1h' },
+        { expiresIn: '2h' },
       );
       const redirectURL = process.env.REDIRECT_URI;
       const data = { key: accessToken };
