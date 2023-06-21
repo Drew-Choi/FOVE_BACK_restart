@@ -15,12 +15,12 @@ const User = require('./models/user');
 const { PORT } = process.env;
 
 // CORS 허용포트 설정
-app.use(cors({ credentials: true, origin: 'http://13.125.248.186:3000' }));
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 
 // 특정 미들웨어에 세션 통신을 위한 허용
 app.use('/toss/approve', (req, res, next) => {
   // CORS 설정
-  res.header('Access-Control-Allow-Origin', 'http://13.125.248.186:3000');
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -29,7 +29,7 @@ app.use('/toss/approve', (req, res, next) => {
 
 app.use('/toss/data', (req, res, next) => {
   // CORS 설정
-  res.header('Access-Control-Allow-Origin', 'http://13.125.248.186:3000');
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -38,7 +38,7 @@ app.use('/toss/data', (req, res, next) => {
 
 app.use('/shipping/search', (req, res, next) => {
   // CORS 설정
-  res.header('Access-Control-Allow-Origin', 'http://13.125.248.186:3000');
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -61,6 +61,7 @@ const order_listRouter = require('./routes/order_list');
 const tossRouter = require('./routes/toss');
 const kakaoRouter = require('./routes/kakao');
 const shippingRouter = require('./routes/shipping');
+const vimeoRouter = require('./routes/vimeo');
 // const orderRouter = require('./routes/order');
 
 app.use('/cart', cartRouter);
@@ -75,6 +76,7 @@ app.use('/order_list', order_listRouter);
 app.use('/toss', tossRouter);
 app.use('/kakao', kakaoRouter);
 app.use('/shipping', shippingRouter);
+app.use('/vimeo', vimeoRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
