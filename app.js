@@ -61,7 +61,6 @@ const order_listRouter = require('./routes/order_list');
 const tossRouter = require('./routes/toss');
 const kakaoRouter = require('./routes/kakao');
 const shippingRouter = require('./routes/shipping');
-const vimeoRouter = require('./routes/vimeo');
 // const orderRouter = require('./routes/order');
 
 app.use('/cart', cartRouter);
@@ -76,7 +75,6 @@ app.use('/order_list', order_listRouter);
 app.use('/toss', tossRouter);
 app.use('/kakao', kakaoRouter);
 app.use('/shipping', shippingRouter);
-app.use('/vimeo', vimeoRouter);
 // app.use('/order', orderRouter);
 
 // ------------------- 미들웨어 -------------------
