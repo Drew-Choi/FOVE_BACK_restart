@@ -15,35 +15,13 @@ const User = require('./models/user');
 const { PORT } = process.env;
 
 // CORS 허용포트 설정
-app.use(cors({ credentials: true, origin: 'http://13.125.248.186:3000' }));
-
-// 특정 미들웨어에 세션 통신을 위한 허용
-app.use('/toss/approve', (req, res, next) => {
-  // CORS 설정
-  res.header('Access-Control-Allow-Origin', 'http://13.125.248.186:3000');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
-
-app.use('/toss/data', (req, res, next) => {
-  // CORS 설정
-  res.header('Access-Control-Allow-Origin', 'http://13.125.248.186:3000');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
-
-app.use('/shipping/search', (req, res, next) => {
-  // CORS 설정
-  res.header('Access-Control-Allow-Origin', 'http://13.125.248.186:3000');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  next();
-});
+const corsOptions = {
+  origin: 'http://13.125.248.186:3000',
+  methods: 'GET, POST, PUT, DELETE',
+  allowedHeaders: 'Content-Type, Authorization',
+  credentials: true,
+};
+app.use(cors(corsOptions));
 
 // bodyparser 를 위한 코드 2줄
 app.use(express.json());
@@ -88,6 +66,14 @@ app.get('/dott', async (req, res) => {
     res.status(200).json({ key: value });
   } else {
     res.status(400).json({ message: 'Invalid key' });
+  }
+});
+
+app.get('/test', (req, res) => {
+  try {
+    res.status(200).json('성공');
+  } catch (err) {
+    console.error(err);
   }
 });
 
