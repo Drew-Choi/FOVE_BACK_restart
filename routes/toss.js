@@ -8,8 +8,8 @@ const { tossApprove, paymentData, tossCancel } = require('../controllers/tossCon
 // 세션설정
 const sessionMiddleware = session({
   secret: process.env.SESSION_KEY,
-  resave: true,
-  saveUninitialized: false,
+  resave: false,
+  saveUninitialized: true,
   cookie: {
     domain: '.fovv-shop.com',
     maxAge: 50000,
