@@ -11,10 +11,11 @@ const sessionMiddleware = session({
   resave: true,
   saveUninitialized: false,
   cookie: {
+    domain: '.fovv-shop.com',
     maxAge: 5000,
     httpOnly: true,
     secure: true,
-    domain: '.fovv-shop.com',
+    sameSite: 'none',
   },
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
