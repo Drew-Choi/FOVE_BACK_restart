@@ -14,6 +14,7 @@ const sessionMiddleware = session({
     maxAge: 5000,
     httpOnly: true,
     secure: true,
+    domain: '.fovv-shop.com',
   },
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
