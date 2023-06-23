@@ -28,7 +28,7 @@ const midlewareCookieParser = cookieParser();
 
 router.get('/approve', sessionMiddleware, tossApprove);
 
-router.get('/data', midlewareCookieParser, paymentData);
+router.get('/data', midlewareCookieParser, sessionMiddleware, paymentData);
 
 router.post('/cancel', tossCancel);
 
