@@ -12,7 +12,7 @@ const sessionMiddleware = session({
   saveUninitialized: false,
   cookie: {
     domain: '.fovv-shop.com',
-    maxAge: 5000,
+    maxAge: 50000,
     httpOnly: true,
     secure: true,
     sameSite: 'strict',
@@ -20,7 +20,7 @@ const sessionMiddleware = session({
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
     collectionName: 'sessions',
-    ttl: 5000,
+    ttl: 50000,
   }),
 });
 
