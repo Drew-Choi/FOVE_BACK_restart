@@ -14,9 +14,12 @@ const User = require('./models/user');
 // 포트설정
 const { PORT } = process.env;
 
+// 주소 불러오기
+const { FRONT_END } = process.env;
+
 // CORS 허용포트 설정
 const corsOptions = {
-  origin: 'http://13.125.248.186:3000',
+  origin: `${FRONT_END}`,
   methods: 'GET, POST, PUT, DELETE',
   allowedHeaders: 'Content-Type, Authorization',
   credentials: true,

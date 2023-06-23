@@ -8,11 +8,12 @@ const { tossApprove, paymentData, tossCancel } = require('../controllers/tossCon
 // 세션설정
 const sessionMiddleware = session({
   secret: process.env.SESSION_KEY,
-  resave: false,
-  saveUninitialized: true,
+  resave: true,
+  saveUninitialized: false,
   cookie: {
     maxAge: 5000,
     httpOnly: true,
+    secure: true,
   },
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,

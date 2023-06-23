@@ -7,7 +7,7 @@ const Order = require('../models/order');
 const Cancel = require('../models/cancel');
 const Product = require('../models/product');
 
-const { JWT_ACCESS_SECRET } = process.env;
+const { JWT_ACCESS_SECRET, FRONT_END } = process.env;
 
 // toss쿼리문 받기
 const tossApprove = async (req, res) => {
@@ -30,7 +30,7 @@ const tossApprove = async (req, res) => {
     const exceededItemFilter = (await Promise.all(exceededItem)).filter(Boolean);
 
     if (exceededItemFilter.length !== 0) {
-      res.redirect('http://13.125.248.186:3000/store/order/checkout/fail');
+      res.redirect(`${FRONT_END}/store/order/checkout/fail`);
     } else {
       // exceededItemFilter의 값이 빈 배열이라면, 재고량 초과하는게 없으니 아래 진행
       const { amount } = req.query;
@@ -63,7 +63,7 @@ const tossApprove = async (req, res) => {
         // eslint-disable-next-line no-unused-expressions
         if (response.status === 200) {
           req.session.cashData = await response.data;
-          res.redirect('http://13.125.248.186:3000/store/order_success');
+          res.redirect(`${FRONT_END}/store/order_success`);
         } else {
           res.status(401).json('인가실패');
         }
