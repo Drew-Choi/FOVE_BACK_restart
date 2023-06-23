@@ -65,7 +65,6 @@ const tossApprove = async (req, res) => {
         if (response.status === 200) {
           req.session.cashData = await response.data;
           const { sessionID } = req;
-          console.log(sessionID);
           res.redirect(`${FRONT_END}/store/order_success?sessionID=${sessionID}`);
         } else {
           res.status(401).json('인가실패');
@@ -90,8 +89,10 @@ const paymentData = async (req, res) => {
 
     if (!payData) return res.status(404).json('세션없음');
     // 데이터가 있다면,
-    console.log(payData);
-    return res.status(200).json(payData);
+    const parse = JSON.parse(payData.session);
+    const originData = parse.cashData;
+    console.log(originData);
+    return res.status(200).json(originData);
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
