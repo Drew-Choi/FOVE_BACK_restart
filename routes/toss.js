@@ -18,7 +18,7 @@ const sessionMiddleware = session({
 
 router.get('/approve', sessionMiddleware, tossApprove);
 
-router.get('/data', sessionMiddleware, paymentData);
+router.get('/data', paymentData);
 
 router.post('/cancel', tossCancel);
 

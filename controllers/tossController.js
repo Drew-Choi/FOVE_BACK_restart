@@ -1,7 +1,6 @@
 /* eslint-disable object-curly-newline */
 const { default: axios } = require('axios');
 const jwt = require('jsonwebtoken');
-const queryString = require('query-string');
 
 require('../mongooseConnect');
 const Order = require('../models/order');
@@ -67,8 +66,7 @@ const tossApprove = async (req, res) => {
           req.session.cashData = await response.data;
           const { sessionID } = req;
           console.log(sessionID);
-          const query = queryString.stringify({ sessionID });
-          res.redirect(`${FRONT_END}/store/order_success?${query}`);
+          res.redirect(`${FRONT_END}/store/order_success?sessionID=${sessionID}`);
         } else {
           res.status(401).json('인가실패');
         }
