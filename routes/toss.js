@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
-const cookieParser = require('cookie-parser');
 
 const { tossApprove, paymentData, tossCancel } = require('../controllers/tossController');
 
@@ -10,12 +9,6 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_KEY,
   resave: false,
   saveUninitialized: true,
-  cookie: {
-    domain: '.fovv-shop.com',
-    maxAge: 50000,
-    httpOnly: true,
-    secure: true,
-  },
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
     collectionName: 'sessions',
@@ -23,11 +16,9 @@ const sessionMiddleware = session({
   }),
 });
 
-const midlewareCookieParser = cookieParser();
-
 router.get('/approve', sessionMiddleware, tossApprove);
 
-router.get('/data', midlewareCookieParser, sessionMiddleware, paymentData);
+router.get('/data', sessionMiddleware, paymentData);
 
 router.post('/cancel', tossCancel);
 

@@ -1,11 +1,13 @@
 /* eslint-disable object-curly-newline */
 const { default: axios } = require('axios');
 const jwt = require('jsonwebtoken');
+const queryString = require('query-string');
 
 require('../mongooseConnect');
 const Order = require('../models/order');
 const Cancel = require('../models/cancel');
 const Product = require('../models/product');
+const Session = require('../models/session');
 
 const { JWT_ACCESS_SECRET, FRONT_END } = process.env;
 
@@ -63,7 +65,10 @@ const tossApprove = async (req, res) => {
         // eslint-disable-next-line no-unused-expressions
         if (response.status === 200) {
           req.session.cashData = await response.data;
-          res.redirect(`${FRONT_END}/store/order_success`);
+          const { sessionID } = req;
+          console.log(sessionID);
+          const query = queryString.stringify({ sessionID });
+          res.redirect(`${FRONT_END}/store/order_success?${query}`);
         } else {
           res.status(401).json('인가실패');
         }
@@ -79,13 +84,16 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    console.log(req.session);
-    console.log(req);
-    const data = await req.session.cashData;
+    const { sessionID } = req.query;
 
-    if (!data) return res.status(404).json('세션없음');
+    if (!sessionID) return res.status(400).json('잘못된 접근');
+    // 아니라면, 아래 진행
+    const payData = await Session.findOne({ _id: sessionID });
+
+    if (!payData) return res.status(404).json('세션없음');
     // 데이터가 있다면,
-    return res.status(200).json(data);
+    console.log(payData);
+    return res.status(200).json(payData);
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');
