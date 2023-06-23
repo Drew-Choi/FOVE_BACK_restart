@@ -79,7 +79,7 @@ const tossApprove = async (req, res) => {
 
 const paymentData = async (req, res) => {
   try {
-    console.log(req);
+    console.log(req.session);
     const data = await req.session.cashData;
 
     if (!data) return res.status(404).json('세션없음');
