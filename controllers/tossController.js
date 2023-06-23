@@ -65,7 +65,16 @@ const tossApprove = async (req, res) => {
         if (response.status === 200) {
           req.session.cashData = await response.data;
           const { sessionID } = req;
-          res.redirect(`${FRONT_END}/store/order_success?sessionID=${sessionID}`);
+
+          const token = jwt.sign(
+            {
+              id: sessionID,
+            },
+            JWT_ACCESS_SECRET,
+            { expiresIn: '5s' },
+          );
+
+          res.redirect(`${FRONT_END}/store/order_success?sessionID=${token}`);
         } else {
           res.status(401).json('인가실패');
         }
@@ -83,16 +92,20 @@ const paymentData = async (req, res) => {
   try {
     const { sessionID } = req.query;
 
-    if (!sessionID) return res.status(400).json('잘못된 접근');
-    // 아니라면, 아래 진행
-    const payData = await Session.findOne({ _id: sessionID });
+    jwt.verify(sessionID, JWT_ACCESS_SECRET, async (err, decoded) => {
+      if (err) return res.status(400).json('세션아이디오류');
+      // 검증 성공시 아래
 
-    if (!payData) return res.status(404).json('세션없음');
-    // 데이터가 있다면,
-    const parse = JSON.parse(payData.session);
-    const originData = parse.cashData;
-    console.log(originData);
-    return res.status(200).json(originData);
+      if (!decoded.id) return res.status(400).json('잘못된 접근');
+      // 아니라면, 아래 진행
+      const payData = await Session.findOne({ _id: decoded.id });
+
+      if (!payData) return res.status(404).json('세션없음');
+      // 데이터가 있다면,
+      const parse = JSON.parse(payData.session);
+      const originData = parse.cashData;
+      return res.status(200).json(originData);
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json('알 수 없는 오류');

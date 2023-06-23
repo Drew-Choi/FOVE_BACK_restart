@@ -12,7 +12,7 @@ const sessionMiddleware = session({
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
     collectionName: 'sessions',
-    ttl: 50000,
+    ttl: 5,
   }),
 });
 
