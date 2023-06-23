@@ -15,7 +15,7 @@ const sessionMiddleware = session({
     maxAge: 50000,
     httpOnly: true,
     secure: true,
-    sameSite: 'strict',
+    sameSite: 'none',
   },
   store: new MongoStore({
     mongoUrl: process.env.MDB_URI_FOVE,
