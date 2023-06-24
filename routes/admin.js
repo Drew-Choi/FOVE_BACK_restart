@@ -60,6 +60,7 @@ const upload = multer({
     // s3버킷설정
     s3: new AWS.S3(),
     bucket: 'fovvimage',
+    cacheControl: 'max-age=604800',
     // 읽기 쓰기 권한 설정
     acl: 'public-read-write',
     // 파일형식 설정 (자동설정으로 했음)
