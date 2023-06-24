@@ -50,10 +50,10 @@ if (!fs.existsSync(dir)) fs.mkdirSync(dir); // dir 디렉토리 존재하는지 
 router.get('/review', getAllReviews);
 
 // 리뷰 작성 /board/review/write
-router.post('/review/write', upload.array('img'), writeReview);
+// router.post('/review/write', upload.array('img'), writeReview);
 
-// 리뷰 수정 /board/review/modify/"리뷰고유코드"
-router.post('/review/modify/:reviewId', upload.array('img'), modifyReview);
+// // 리뷰 수정 /board/review/modify/"리뷰고유코드"
+// router.post('/review/modify/:reviewId', upload.array('img'), modifyReview);
 
 // 리뷰 수정 /board/review/delete/"리뷰고유코드"
 router.post('/review/delete/:reviewId', deleteReview);
