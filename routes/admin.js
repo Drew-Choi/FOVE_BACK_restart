@@ -1,5 +1,7 @@
 const router = require('express').Router();
 const multer = require('multer');
+const multerS3 = require('multer-s3');
+const AWS = require('aws-sdk');
 const fs = require('fs');
 
 // productControll - 물건 관련
@@ -38,36 +40,40 @@ const {
 const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossController');
 // const { getAllOrder } = require('../controllers/orderController');
 
+// AWS인증 ---
+const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION } = process.env;
+
+const credentials = new AWS.Credentials({
+  accessKeyId: AWS_ACCESS_ID_KEY,
+  secretAccessKey: AWS_SECRET_KEY,
+});
+
+AWS.config.credentials = credentials;
+AWS.config.region = AWS_REGION;
+// --- 인증 끝
+
 // ------------------- multer, 이미지 저장 관련 -------------------
 // 상품등록 multer
-// distStorage를 사용하여 multer 스토리지 엔진을 생성
-// destination 함수는 세가지 매개변수를 사용함(req: Http요청, file: 업로드 된 파일 객체, cb: 콜백함수)
-// cb에 업로드 된 파일의 대상 폴더 저장
-// filename 함수도 동일한 세개의 매개변수 하용
-// originalname속성을 사용해 파일의 원본 이름을 저장
+// s3 버켓 설정 multer설정
+const upload = multer({
+  storage: multerS3({
+    // s3버킷설정
+    s3: new AWS.S3(),
+    bucket: 'fovvimage',
+    // 읽기 쓰기 권한 설정
+    acl: 'public-read-write',
+    // 파일형식 설정 (자동설정으로 했음)
+    contentType: multerS3.AUTO_CONTENT_TYPE,
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = './uploads';
-
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir); // dir 디렉토리 존재하는지 확인하고 없으면 생성
-
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const { originalname } = file;
-    const destinationPath = './uploads';
-
-    // 경로에 같은 파일 명이 있을 경우 덮어쓰기
-    if (fs.existsSync(destinationPath + originalname)) {
-      cb(null, file.originalname);
-    } else {
-      cb(null, file.originalname);
-    }
-  },
+    // 저장경로 및 파일명 설정
+    key: (req, file, cb) => {
+      // 저장 경로 설정
+      const dir = 'uploads/';
+      // 저장경로와 파일명 반환
+      cb(null, dir + file.originalname);
+    },
+  }),
 });
-// 앞서 정의한 storage 엔진을 사용하는 multer 미들웨어 함수 upload를 생성(업로드 처리 담당)
-const upload = multer({ storage });
 
 // -----------------------------------------------------------------
 

@@ -25,8 +25,8 @@ const createProduct = async (req, res) => {
     const { productCode, productName, price, category, size, detail, createAt } = JSON.parse(req.body.data);
     // req.body의 data 필드를 JSON으로 구문 분석하고 결과 객체를 분해하여 변수명과 일치하는 key 값의 값들을 각 변수들에 저장
     // 프론트에서 data라는 이름으로 JSON 형태로 보내기 때문에 req.body.data로 받아서 JSON.parse() 함수를 이용해 객체형태로 parsing
-
-    const img = req.files.map((el) => el.originalname);
+    console.log(req.files);
+    const img = req.files.map((el) => el.location);
     // // req.files 배열의 요소들을 각 파일의 원본명으로 매핑하여 'img' 라는 이름의 새 배열에 저장
 
     const finder = await Product.find({ productName });
