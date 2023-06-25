@@ -76,7 +76,8 @@ const getNewProducts = async (req, res) => {
     // const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const twelveHoursAgo = new Date(Date.now() - 24 * 7 * 60 * 60 * 1000); // 12시간 내
     const products = await Product.find({ createAt: { $gte: twelveHoursAgo } }); // gte: '크거나 같음' 연산자
-    res.status(200).json(products);
+    const arr = products.sort((a, b) => b.createAt - a.createAt);
+    res.status(200).json(arr);
   } catch (err) {
     console.error(err);
     res.status(500).send('상품 불러오기 실패(서버 에러)');
@@ -93,7 +94,8 @@ const getProductsByCategory = async (req, res) => {
       return res.status(400).send('유효하지 않은 카테고리 입니다.');
     }
     const products = await Product.find({ category: category.toUpperCase() }); // DB에서 해당 category 의 상품들만 조회해서 products 배열에 담기
-    res.status(200).json(products); // 상태코드 200과 products 배열을 json 응답
+    const arr = products.sort((a, b) => b.createAt - a.createAt);
+    res.status(200).json(arr); // 상태코드 200과 products 배열을 json 응답
   } catch (err) {
     console.error(err);
     res.status(500).send('조회 실패(서버 에러)');
