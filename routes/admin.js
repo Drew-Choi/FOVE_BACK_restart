@@ -2,7 +2,6 @@ const router = require('express').Router();
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const AWS = require('aws-sdk');
-const fs = require('fs');
 
 // productControll - 물건 관련
 const {
@@ -79,22 +78,23 @@ const upload = multer({
 // multer
 // 반품리스트 사진 multer
 const returnStorage = multer({
-  storage: multer.diskStorage({
-    destination: (request, file, cb) => {
+  storage: multerS3({
+    // s3버킷설정
+    s3: new AWS.S3(),
+    bucket: 'fovvimage',
+    cacheControl: 'max-age=604800',
+    // 파일형식 설정 (자동설정으로 했음)
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, cb) => {
       if (file.fieldname === 'img_return') {
+        // 폴더이름 생성
         const folderName = file.originalname.split('.').shift();
         const folderNameFinal = folderName.substring(0, folderName.length - 2);
-        const returnDir = `./uploads/${folderNameFinal}`;
+        const returnDir = `uploads/${folderNameFinal}/`;
 
-        if (!fs.existsSync(returnDir)) {
-          fs.mkdirSync(returnDir, { recursive: true });
-        }
-        cb(null, returnDir);
+        // 경로 지정
+        cb(null, returnDir + file.originalname);
       }
-    },
-    filename: (request, file, cb) => {
-      const filename = file.originalname;
-      cb(null, filename);
     },
   }),
 });
