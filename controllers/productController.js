@@ -1,6 +1,6 @@
 /* eslint-disable object-curly-newline */
 const jwt = require('jsonwebtoken');
-const fs = require('fs');
+const AWS = require('aws-sdk');
 
 require('../mongooseConnect');
 const Product = require('../models/product');
@@ -177,15 +177,35 @@ const deleteProduct = async (req, res) => {
     if (!deletedProduct) {
       return res.status(404).json('해당 상품이 존재하지 않습니다.');
     }
-    for (let i = 0; i < deletedProduct.img.length; i += 1) {
-      const imgPath = `./uploads/${deletedProduct.img[i]}`;
-      fs.unlink(imgPath, (err) => {
-        if (err && err.code !== 'ENOENT') {
-          console.error(err);
-          res.status(500).json('내부오류');
-        }
+    // AWS인증 ---
+    const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION, AWS_BUCKET_NAME } = process.env;
+
+    const credentials = new AWS.Credentials({
+      accessKeyId: AWS_ACCESS_ID_KEY,
+      secretAccessKey: AWS_SECRET_KEY,
+    });
+
+    AWS.config.credentials = credentials;
+    AWS.config.region = AWS_REGION;
+    // --- 인증 끝
+
+    // s3열어주고,
+    const s3 = new AWS.S3();
+
+    const deleteObj = async () => {
+      const deleteItem = deletedProduct.img.map((el) => {
+        const params = {
+          Bucket: AWS_BUCKET_NAME,
+          Key: `uploads/${el}`,
+        };
+        return s3.deleteObject(params).promise();
       });
-    }
+      // eslint-disable-next-line no-undef
+      await Promise.all(deleteItem);
+    };
+
+    await deleteObj();
+
     res.status(200).json('상품 삭제 완료');
   } catch (err) {
     console.error(err);
