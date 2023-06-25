@@ -1,11 +1,11 @@
 const router = require('express').Router();
-const multer = require('multer');
-const fs = require('fs');
+// const multer = require('multer');
+// const fs = require('fs');
 
 const {
   getAllArticles,
-  writeArticle,
-  modifyReview,
+  // writeArticle,
+  // modifyReview,
   deleteReview,
   getLikeCount,
   addUserIdtoLike,

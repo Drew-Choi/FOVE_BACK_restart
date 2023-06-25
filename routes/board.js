@@ -1,6 +1,6 @@
 const router = require('express').Router();
 // const multer = require('multer');
-const fs = require('fs');
+// const fs = require('fs');
 
 const {
   getAllReviews,

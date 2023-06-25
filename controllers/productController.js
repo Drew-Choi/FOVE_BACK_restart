@@ -222,13 +222,28 @@ const deleteImgProduct = async (req, res) => {
 
     if (deleteImg) {
       // 이미지 원본 삭제
-      const imgPath = `./uploads/${imgURL}`;
-      fs.unlink(imgPath, (err) => {
-        if (err && err.code !== 'ENOENT') {
-          console.error(err);
-          res.status(500).json('내부 오류');
-        }
+      // AWS인증 ---
+      const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION, AWS_BUCKET_NAME } = process.env;
+
+      const credentials = new AWS.Credentials({
+        accessKeyId: AWS_ACCESS_ID_KEY,
+        secretAccessKey: AWS_SECRET_KEY,
       });
+
+      AWS.config.credentials = credentials;
+      AWS.config.region = AWS_REGION;
+      // --- 인증 끝
+
+      // s3열어주고,
+      const s3 = new AWS.S3();
+
+      // 버킷 및 파일경로
+      const params = {
+        Bucket: AWS_BUCKET_NAME,
+        Key: `uploads/${imgURL}`,
+      };
+
+      await s3.deleteObject(params).promise();
 
       return res.status(200).json('이미지 삭제완료');
     }
@@ -351,14 +366,38 @@ const cancelSubmitReturn = async (req, res) => {
       // 해당 주문내역가 있으면 아래 작업 진행
       if (orderInfo) {
         // 해당 신청 이미지 지우기
+        // AWS인증 ---
+        const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION, AWS_BUCKET_NAME } = process.env;
 
-        const imgPath = `./uploads/${orderId}`;
-        fs.rm(imgPath, { recursive: true }, (error) => {
-          if (error && error.code !== 'ENOENT') {
-            console.error(error);
-            res.status(500).json('내부오류');
-          }
+        const credentials = new AWS.Credentials({
+          accessKeyId: AWS_ACCESS_ID_KEY,
+          secretAccessKey: AWS_SECRET_KEY,
         });
+
+        AWS.config.credentials = credentials;
+        AWS.config.region = AWS_REGION;
+        // --- 인증 끝
+
+        // s3열어주고,
+        const s3 = new AWS.S3();
+        // 삭제할 폴더 경로
+        const folderName = `uploads/${orderId}`;
+
+        // s3용 매서드 사용
+        // s3는 폴더 개념이 아닌 객체 개념이라 폴더 내부 파일들을 먼저 삭제해 줘야 하므로,
+        // 해당 폴더 내부의 객체들을 불러와 리스트업시킨다.
+        const objects = await s3.listObjects({ Bucket: AWS_BUCKET_NAME, Prefix: folderName }).promise();
+
+        // 폴더 내부의 모든 객체를 순회하면서 삭제
+        await s3
+          .deleteObjects({
+            Bucket: AWS_BUCKET_NAME,
+            Delete: { Objects: objects.Contents.map((el) => ({ Key: el.Key })) },
+          })
+          .promise();
+
+        // 폴더 삭제
+        await s3.deleteObject({ Bucket: AWS_BUCKET_NAME, Key: folderName }).promise();
 
         // 주문내역서에 새롭게 추가될 내용 정리
         // 해당 주문내역서 데이터 업데이트 및 반품신청서 캔슬로 수정
@@ -403,13 +442,39 @@ const cancelSubmitReturnAdmin = async (req, res) => {
     // 해당 주문내역가 있으면 아래 작업 진행
     if (orderInfo) {
       // 해당 신청 이미지 지우기
-      const imgPath = `./uploads/${orderId}`;
-      fs.rm(imgPath, { recursive: true }, (error) => {
-        if (error && error.code !== 'ENOENT') {
-          console.error(error);
-          res.status(500).json('내부오류');
-        }
+      // AWS인증 ---
+      const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION, AWS_BUCKET_NAME } = process.env;
+
+      const credentials = new AWS.Credentials({
+        accessKeyId: AWS_ACCESS_ID_KEY,
+        secretAccessKey: AWS_SECRET_KEY,
       });
+
+      AWS.config.credentials = credentials;
+      AWS.config.region = AWS_REGION;
+      // --- 인증 끝
+
+      // s3열어주고,
+      const s3 = new AWS.S3();
+      // 삭제할 폴더 경로
+      const folderName = `uploads/${orderId}`;
+
+      // s3용 매서드 사용
+      // s3는 폴더 개념이 아닌 객체 개념이라 폴더 내부 파일들을 먼저 삭제해 줘야 하므로,
+      // 해당 폴더 내부의 객체들을 불러와 리스트업시킨다.
+      const objects = await s3.listObjects({ Bucket: AWS_BUCKET_NAME, Prefix: folderName }).promise();
+
+      // 폴더 내부의 모든 객체를 순회하면서 삭제
+      await s3
+        .deleteObjects({
+          Bucket: AWS_BUCKET_NAME,
+          Delete: { Objects: objects.Contents.map((el) => ({ Key: el.Key })) },
+        })
+        .promise();
+
+      // 폴더 삭제
+      await s3.deleteObject({ Bucket: AWS_BUCKET_NAME, Key: folderName }).promise();
+
       // 주문내역서에 새롭게 추가될 내용 정리
       // 해당 주문내역서 데이터 업데이트 및 반품신청서 캔슬로 수정
       const updateOrderInfo = await Order.findOneAndUpdate(
