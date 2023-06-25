@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 const router = require('express').Router();
 const multer = require('multer');
 const multerS3 = require('multer-s3');
@@ -40,7 +41,7 @@ const { tossCancelAdmin, tossCancelAdminRefund } = require('../controllers/tossC
 // const { getAllOrder } = require('../controllers/orderController');
 
 // AWS인증 ---
-const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION } = process.env;
+const { AWS_ACCESS_ID_KEY, AWS_SECRET_KEY, AWS_REGION, AWS_BUCKET_NAME } = process.env;
 
 const credentials = new AWS.Credentials({
   accessKeyId: AWS_ACCESS_ID_KEY,
@@ -58,7 +59,7 @@ const upload = multer({
   storage: multerS3({
     // s3버킷설정
     s3: new AWS.S3(),
-    bucket: 'fovvimage',
+    bucket: AWS_BUCKET_NAME,
     cacheControl: 'max-age=604800',
     // 파일형식 설정 (자동설정으로 했음)
     contentType: multerS3.AUTO_CONTENT_TYPE,
@@ -81,7 +82,7 @@ const returnStorage = multer({
   storage: multerS3({
     // s3버킷설정
     s3: new AWS.S3(),
-    bucket: 'fovvimage',
+    bucket: AWS_BUCKET_NAME,
     cacheControl: 'max-age=604800',
     // 파일형식 설정 (자동설정으로 했음)
     contentType: multerS3.AUTO_CONTENT_TYPE,
