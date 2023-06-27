@@ -107,7 +107,7 @@ router.post('/register-product', upload.array('img'), createProduct);
 // 여기서 업로드 된 파일은 createProduct 기능의 req.files 배열에서 사용 가능
 
 // 상품 고유 코드 생성기 (중복체크 해줌)
-router.get('/register-product/uniqueCheck', uniqueNumberGenerate);
+router.post('/register-product/uniqueCheck', uniqueNumberGenerate);
 
 // 반품신청 리스트를 얻기
 router.post('/return_submit', returnStorage.array('img_return'), submitReturnList);

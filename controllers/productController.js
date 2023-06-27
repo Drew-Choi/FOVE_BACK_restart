@@ -510,6 +510,8 @@ const cancelSubmitReturnAdmin = async (req, res) => {
 // 상품 고유번호 생성하여 DB중복여부 확인 후 프론트로 보내주는 미들웨어
 const uniqueNumberGenerate = async (req, res) => {
   try {
+    const { headCode } = req.body;
+
     // 유니크 상품 코드 생성
     const generateUniqueNum = (youWantLength) => {
       const base = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -529,7 +531,7 @@ const uniqueNumberGenerate = async (req, res) => {
       // eslint-disable-next-line no-constant-condition
       while (true) {
         // eslint-disable-next-line no-await-in-loop
-        uniqueNumber = generateUniqueNum(5);
+        uniqueNumber = headCode + generateUniqueNum(5);
         // eslint-disable-next-line no-await-in-loop
         const finder = await Product.find({ productCode: uniqueNumber });
 
@@ -543,7 +545,7 @@ const uniqueNumberGenerate = async (req, res) => {
     // 유니코드 체크한거 담기
     const checkCompleteNumber = await uniqueCheckING();
 
-    if (checkCompleteNumber && checkCompleteNumber.length === 5) {
+    if (checkCompleteNumber) {
       res.status(200).json({ uniqueNumber: checkCompleteNumber });
     } else {
       res.status(500).json({ message: '알 수 없는 오류. 고유코드 생성실패' });
