@@ -60,7 +60,7 @@ const upload = multer({
     // s3버킷설정
     s3: new AWS.S3(),
     bucket: AWS_BUCKET_NAME,
-    cacheControl: 'no-store',
+    cacheControl: 'no-cache',
     // 파일형식 설정 (자동설정으로 했음)
     contentType: multerS3.AUTO_CONTENT_TYPE,
 
