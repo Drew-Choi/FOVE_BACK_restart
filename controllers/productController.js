@@ -69,33 +69,28 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-// 신상품 불러오기
-const getNewProducts = async (req, res) => {
-  try {
-    // 현재 날짜에서 7일 분량 빼기(24시간 * 60분 * 60초 * 1000밀리초)
-    // const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const twelveHoursAgo = new Date(Date.now() - 24 * 7 * 60 * 60 * 1000); // 12시간 내
-    const products = await Product.find({ createAt: { $gte: twelveHoursAgo } }); // gte: '크거나 같음' 연산자
-    const arr = products.sort((a, b) => b.createAt - a.createAt);
-    res.status(200).json(arr);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('상품 불러오기 실패(서버 에러)');
-  }
-};
-
 // 해당 카테고리 불러오기
 const getProductsByCategory = async (req, res) => {
   try {
     const { category } = req.params; // params로 들어온 category 이름을 구조분해할당으로 매칭시켜 변수 저장
-    const categories = ['beanie', 'cap', 'training', 'windbreaker'];
+    const categories = ['beanie', 'cap', 'training', 'windbreaker', 'new'];
+
     if (!categories.includes(category)) {
       // params로 들어온 category가 위 categories 배열에 없을 때
       return res.status(400).send('유효하지 않은 카테고리 입니다.');
     }
-    const products = await Product.find({ category: category.toUpperCase() }); // DB에서 해당 category 의 상품들만 조회해서 products 배열에 담기
-    const arr = products.sort((a, b) => b.createAt - a.createAt);
-    res.status(200).json(arr); // 상태코드 200과 products 배열을 json 응답
+    // 카테고리가 정상적으로 들어오면 아래 진행
+
+    if (category === 'new') {
+      const twelveHoursAgo = new Date(Date.now() - 24 * 7 * 60 * 60 * 1000); // 12시간 내
+      const products = await Product.find({ createAt: { $gte: twelveHoursAgo } }); // gte: '크거나 같음' 연산자
+      const arr = products.sort((a, b) => b.createAt - a.createAt);
+      res.status(200).json(arr);
+    } else {
+      const products = await Product.find({ category: category.toUpperCase() }); // DB에서 해당 category 의 상품들만 조회해서 products 배열에 담기
+      const arr = products.sort((a, b) => b.createAt - a.createAt);
+      res.status(200).json(arr); // 상태코드 200과 products 배열을 json 응답
+    }
   } catch (err) {
     console.error(err);
     res.status(500).send('조회 실패(서버 에러)');
@@ -108,11 +103,11 @@ const getProductDetail = async (req, res) => {
     const { productCode } = req.params; // params로 들어온 productId 값을 구조분해할당으로 매칭시켜 변수 저장
     const product = await Product.find({ productCode });
 
-    // 예비 코드
-    // const product = await Product.findById(productId); // 상품 DB에서 _id가 productId 인 것 조회해서 product에 담기
-    // if (!product) {
-    //   return res.status(404).send('해당 상품이 존재하지 않습니다.');
-    // }
+    console.log(product);
+
+    if (product.length === 0) {
+      return res.status(404).send('해당 상품이 존재하지 않습니다.');
+    }
     res.status(200).json(product); // 상태코드 200과 product를 json 응답
   } catch (err) {
     console.error(err);
@@ -559,7 +554,6 @@ const uniqueNumberGenerate = async (req, res) => {
 module.exports = {
   createProduct,
   getAllProducts,
-  getNewProducts,
   getProductsByCategory,
   getProductDetail,
   deleteProduct,
