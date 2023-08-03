@@ -103,8 +103,6 @@ const getProductDetail = async (req, res) => {
     const { productCode } = req.params; // params로 들어온 productId 값을 구조분해할당으로 매칭시켜 변수 저장
     const product = await Product.find({ productCode });
 
-    console.log(product);
-
     if (product.length === 0) {
       return res.status(404).send('해당 상품이 존재하지 않습니다.');
     }
