@@ -1274,16 +1274,20 @@ const submitRefundCancel = async (req, res) => {
     // 해당 폴더 내부의 객체들을 불러와 리스트업시킨다.
     const objects = await s3.listObjects({ Bucket: AWS_BUCKET_NAME, Prefix: folderName }).promise();
 
-    // 폴더 내부의 모든 객체를 순회하면서 삭제
-    await s3
-      .deleteObjects({
-        Bucket: AWS_BUCKET_NAME,
-        Delete: { Objects: objects.Contents.map((el) => ({ Key: el.Key })) },
-      })
-      .promise();
+    // 사진 파일이 있으면 삭제 진행
+    if (objects.Contents.length !== 0) {
+      // 폴더 내부의 모든 객체를 순회하면서 삭제
+      await s3
+        .deleteObjects({
+          Bucket: AWS_BUCKET_NAME,
+          Delete: { Objects: objects.Contents.map((el) => ({ Key: el.Key })) },
+        })
+        .promise();
 
-    // 폴더 삭제
-    await s3.deleteObject({ Bucket: AWS_BUCKET_NAME, Key: folderName }).promise();
+      // 폴더 삭제
+      await s3.deleteObject({ Bucket: AWS_BUCKET_NAME, Key: folderName }).promise();
+    }
+    // 사진파일 없을 시(관리자 강제 철회) 아래 진행
 
     const newValue = {
       'payments.status': 'DONE',
