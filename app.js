@@ -33,7 +33,6 @@ app.use(express.urlencoded({ extended: false }));
 // ------------------- 라우터 -------------------
 const cartRouter = require('./routes/cart');
 const adminRouter = require('./routes/admin');
-const productRouter = require('./routes/product');
 const storeRouter = require('./routes/store');
 const boardRouter = require('./routes/board');
 const noticeRouter = require('./routes/notice');
@@ -46,7 +45,6 @@ const shippingRouter = require('./routes/shipping');
 
 app.use('/cart', cartRouter);
 app.use('/admin', adminRouter);
-app.use('/product', productRouter);
 app.use('/store', storeRouter);
 app.use('/uploads', express.static('uploads'));
 app.use('/board', boardRouter);

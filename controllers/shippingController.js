@@ -15,9 +15,10 @@ const changeTimetoNum = (time) => {
 
 const { JWT_ACCESS_SECRET } = process.env;
 
+// CJ는 현재 미사용, 추후에 추가 될 수 있음
 const searchCJ = async (req, res) => {
   try {
-    // 영호가 빌려준 송장
+    // 테스트 송장
     // const shippingCode = 656276279413;
     // 임의 송장
     const shippingCode = 123456789112;
