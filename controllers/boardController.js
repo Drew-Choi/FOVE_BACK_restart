@@ -39,7 +39,16 @@ const modifyReview = async (req, res) => {
     const { title, writer, content } = req.body;
     const img = req.files.map((el) => el.originalname);
 
-    const updatedReview = await Review.findByIdAndUpdate(reviewId, { title, writer, content, img }, { new: true });
+    const updatedReview = await Review.findByIdAndUpdate(
+      reviewId,
+      {
+        title,
+        writer,
+        content,
+        img,
+      },
+      { new: true },
+    );
 
     if (!updatedReview) {
       return res.status(404).json('해당 리뷰를 찾을 수 없습니다.');

@@ -1,7 +1,6 @@
 const router = require('express').Router();
 const {
   getAllProducts,
-  getNewProducts,
   getProductsByCategory,
   getProductDetail,
   searchProduct,
