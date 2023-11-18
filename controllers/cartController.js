@@ -61,6 +61,16 @@ const getCartInfo = async (req, res) => {
                 productName: el.productName,
                 productCode: el.productCode,
               });
+
+              // 상품이 없다면 해당 상품 삭제하고 끝냄
+              if (!productStockCheck2) {
+                await Cart.findOneAndUpdate(
+                  { user: decoded.id },
+                  { $pull: { products: { productCode: el.productCode } } },
+                );
+                return;
+              }
+
               // 0이 아니라면 그냥 종료지만, 만약 0이라면 솔드아웃되었기 때문에 카트 정보를 업데이트 해야함
               if (productStockCheck2.size[cartSizeValue] === 0) {
                 // 0이면 솔드아웃된 것이므로 카트 내 해당 상품의 해당 사이즈의 수량을 음수로 바꿔준다.
